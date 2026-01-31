@@ -52,6 +52,10 @@ public class User {
         this.createdAt = LocalDateTime.now();
     }
 
+    public void updateLastLoginAt(LocalDateTime lastLoginAt) {
+        this.lastLoginAt = lastLoginAt;
+    }
+
     public enum UserRole {
         ADMIN, THERAPIST, PARENT
     }

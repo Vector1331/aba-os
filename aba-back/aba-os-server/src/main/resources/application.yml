@@ -20,3 +20,9 @@ spring:
 logging:
   level:
     org.hibernate.SQL: debug
+
+# JWT Configuration
+jwt:
+  secret: abaOsSecretKeyForJwtTokenGenerationMustBeAtLeast256BitsLong2026
+  access-token-validity: 3600000      # 1시간 (ms)
+  refresh-token-validity: 604800000   # 7일 (ms)
