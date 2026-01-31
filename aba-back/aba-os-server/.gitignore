@@ -4,6 +4,8 @@ build/
 !gradle/wrapper/gradle-wrapper.jar
 !**/src/main/**/build/
 !**/src/test/**/build/
+claude.md
+aba-back\ABA-OS 통합 기능 정의서v1.md
 
 ### STS ###
 .apt_generated
