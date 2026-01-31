@@ -1,11 +1,14 @@
 package com.aba.os.abaosserver.service;
 
 import com.aba.os.abaosserver.domain.Center;
+import com.aba.os.abaosserver.domain.Therapist;
 import com.aba.os.abaosserver.domain.User;
+import com.aba.os.abaosserver.domain.User.UserRole;
 import com.aba.os.abaosserver.dto.auth.LoginRequest;
 import com.aba.os.abaosserver.dto.auth.LoginResponse;
 import com.aba.os.abaosserver.dto.auth.RegisterRequest;
 import com.aba.os.abaosserver.repository.CenterRepository;
+import com.aba.os.abaosserver.repository.TherapistRepository;
 import com.aba.os.abaosserver.repository.UserRepository;
 import com.aba.os.abaosserver.security.JwtTokenProvider;
 import lombok.RequiredArgsConstructor;
@@ -22,6 +25,7 @@ public class AuthService {
 
     private final UserRepository userRepository;
     private final CenterRepository centerRepository;
+    private final TherapistRepository therapistRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenProvider jwtTokenProvider;
 
@@ -45,7 +49,16 @@ public class AuthService {
                 .role(request.getRole())
                 .build();
 
-        userRepository.save(user);
+        User savedUser = userRepository.save(user);
+
+        // THERAPIST인 경우 therapists 테이블에도 저장
+        if (request.getRole() == UserRole.THERAPIST) {
+            Therapist therapist = Therapist.builder()
+                    .user(savedUser)
+                    .center(center)
+                    .build();
+            therapistRepository.save(therapist);
+        }
     }
 
     @Transactional
