@@ -25,10 +25,9 @@ public class Child {
     @JoinColumn(name = "center_id", nullable = false)
     private Center center; // Center와 연결
 
-    // Therapist 엔티티 만들기 전이라 임시로 ID만 저장하도록 주석 처리 또는 UUID 필드로 둡니다.
-    // 나중에 @ManyToOne으로 바꿀 예정
-    @Column(name = "therapist_id", nullable = false)
-    private UUID therapistId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "therapist_id", nullable = false)
+    private Therapist therapist;
 
     @Column(nullable = false, length = 50)
     private String name;
