@@ -24,4 +24,10 @@ public interface ChildRepository extends JpaRepository<Child, UUID> {
 
     // Dashboard: 센터별 활성 아동 수 카운트
     long countByCenter_IdAndStatus(UUID centerId, String status);
+
+    // Migration: 이름과 생년월일로 중복 체크
+    boolean existsByCenter_IdAndNameAndBirthDate(UUID centerId, String name, java.time.LocalDate birthDate);
+
+    // Migration: 이름으로 아동 조회 (목표 연결용)
+    java.util.Optional<Child> findByCenter_IdAndName(UUID centerId, String name);
 }
