@@ -43,4 +43,14 @@ public interface SessionRepository extends JpaRepository<Session, UUID> {
             "LEFT JOIN FETCH tr.goal " +
             "WHERE s.id = :sessionId")
     Optional<Session> findByIdWithDetails(@Param("sessionId") UUID sessionId);
+
+    // Dashboard: 특정 날짜의 센터별 세션 수 카운트
+    long countByChild_Center_IdAndSessionDate(UUID centerId, LocalDate sessionDate);
+
+    // Dashboard: 기간별 센터 세션 수 카운트
+    long countByChild_Center_IdAndSessionDateBetween(UUID centerId, LocalDate startDate, LocalDate endDate);
+
+    // Dashboard: 미래 예정 세션 조회 (최대 5개, 날짜 오름차순)
+    List<Session> findTop5ByChild_Center_IdAndSessionDateGreaterThanEqualOrderBySessionDateAsc(
+            UUID centerId, LocalDate fromDate);
 }
