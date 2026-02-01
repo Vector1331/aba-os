@@ -55,12 +55,21 @@ public class Child {
     @Builder.Default
     private String status = "active";
 
+    @Column(name = "last_session_date")
+    private LocalDate lastSessionDate;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
     @PrePersist
     public void prePersist() {
         this.createdAt = LocalDateTime.now();
+    }
+
+    public void updateLastSessionDate(LocalDate sessionDate) {
+        if (this.lastSessionDate == null || sessionDate.isAfter(this.lastSessionDate)) {
+            this.lastSessionDate = sessionDate;
+        }
     }
 
     public enum Gender {
