@@ -64,9 +64,9 @@ Content-Type: application/json
 Authorization: Bearer {{auth_token}}
 
 {
-  "name": "김철수",
+  "name": "김영희",
   "birthDate": "2020-05-05",
-  "gender": "MALE",
+  "gender": "FEMALE",
   "diagnosis": "자폐 스펙트럼 장애 (ASD)",
   "currentDevLevel": "눈 맞춤이 어렵고 발화가 제한적임",
   "parentCharacteristics": "가정 연계 치료에 적극적임",
@@ -130,8 +130,8 @@ Authorization: Bearer {{auth_token}}
 {
   "childId": "{{child_id}}",
   "therapistId": "3391df24-f382-4736-95b7-74f2ba73b09b",
-  "sessionDate": "2026-02-02",
-  "duration": 50,
+  "sessionDate": "2026-02-01",
+  "duration": 30,
   "notes": "첫 세션 진행. 아이의 컨디션이 매우 좋았음.",
   "trials": [
     {
@@ -188,5 +188,10 @@ Authorization: Bearer {{auth_token}}
 ### 15. 리포트 상세 조회 (Get Report Detail)
 # 통계(총 세션, 시도, 정확도)와 content(AI 템플릿 문구)를 확인하세요.
 GET http://localhost:8080/api/v1/reports/{{report_id}}
+Authorization: Bearer {{auth_token}}
+
+### 16. 대시보드 요약 조회 (Dashboard Summary)
+# 센터별 활성 아동 수, 오늘/이번 달 세션 수, 예정 세션 목록을 조회합니다.
+GET http://localhost:8080/api/v1/dashboard/summary
 Authorization: Bearer {{auth_token}}
 
