@@ -1,3 +1,12 @@
+#INSERT INTO centers (id, name, invite_code, address, created_at)
+#VALUES (
+#  gen_random_uuid(),
+#  'ABA 데모 센터',
+#  'ABA2026',
+#  '서울시 강남구 테헤란로',
+#  NOW()
+#);
+
 ### 1. 회원가입 요청 (Register)
 # 설명: 초대코드(ABA2026)를 이용해 치료사 계정을 생성합니다.
 POST http://localhost:8080/api/v1/auth/register
@@ -83,6 +92,11 @@ Content-Type: application/json
 GET http://localhost:8080/api/v1/children
 Authorization: Bearer {{auth_token}}
 
+> {%
+    client.global.set("child_id", response.body.data[0].id);
+    client.log("Child ID saved: " + client.global.get("child_id"));
+%}
+
 ### 8. 목표 생성 (Create Goal)
 # ⚠️ 주의: URL의 {childId} 자리에 위 목록 조회에서 나온 아동 ID를 넣으세요.
 POST http://localhost:8080/api/v1/children/19f5f936-ee6c-4d5c-ab09-8b3770d76fac/goals
@@ -101,3 +115,52 @@ Authorization: Bearer {{auth_token}}
 ### 9. 목표 목록 조회 (List Goals)
 GET http://localhost:8080/api/v1/children/19f5f936-ee6c-4d5c-ab09-8b3770d76fac/goals
 Authorization: Bearer {{auth_token}}
+
+> {%
+    // 첫 번째 목표의 ID를 'goal_id' 변수에 저장.
+    client.global.set("goal_id", response.body.data[0].id);
+    client.log("Goal ID saved: " + client.global.get("goal_id"));
+%}
+
+### 10.세션 생성(Create Session)
+POST http://localhost:8080/api/v1/sessions
+Content-Type: application/json
+Authorization: Bearer {{auth_token}}
+
+{
+  "childId": "{{child_id}}",
+  "therapistId": "3391df24-f382-4736-95b7-74f2ba73b09b",
+  "sessionDate": "2026-02-02",
+  "duration": 50,
+  "notes": "첫 세션 진행. 아이의 컨디션이 매우 좋았음.",
+  "trials": [
+    {
+      "goalId": "{{goal_id}}",
+      "trials": 10,
+      "successes": 8,
+      "promptType": "VERBAL"
+    },
+    {
+      "goalId": "{{goal_id}}",
+      "trials": 5,
+      "successes": 5,
+      "promptType": "NONE"
+    }
+  ]
+}
+
+> {%
+    client.global.set("session_id", response.body.data);
+    client.log("Session ID saved: " + response.body.data);
+%}
+
+### 11. 세션 목록 조회 (Get Session List)
+GET http://localhost:8080/api/v1/sessions?childId={{child_id}}
+Authorization: Bearer {{auth_token}}
+
+### 12. 세션 상세 조회 (Get Session Detail)
+GET http://localhost:8080/api/v1/sessions/{{session_id}}
+Authorization: Bearer {{auth_token}}
+
+
+
