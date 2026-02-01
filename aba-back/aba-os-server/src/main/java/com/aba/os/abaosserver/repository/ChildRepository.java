@@ -21,4 +21,7 @@ public interface ChildRepository extends JpaRepository<Child, UUID> {
             @Param("centerId") UUID centerId,
             @Param("therapistId") UUID therapistId
     );
+
+    // Dashboard: 센터별 활성 아동 수 카운트
+    long countByCenter_IdAndStatus(UUID centerId, String status);
 }
