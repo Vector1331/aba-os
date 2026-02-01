@@ -4,6 +4,7 @@ import com.aba.os.abaosserver.domain.Therapist;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -11,4 +12,7 @@ import java.util.UUID;
 public interface TherapistRepository extends JpaRepository<Therapist, UUID> {
 
     Optional<Therapist> findByUserId(UUID userId);
+
+    // Migration: 센터별 치료사 목록 조회
+    List<Therapist> findByCenter_Id(UUID centerId);
 }
