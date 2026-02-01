@@ -113,7 +113,7 @@ public class SessionService {
             throw new IllegalArgumentException("접근 권한이 없습니다.");
         }
 
-        List<Session> sessions = sessionRepository.findByChildIdAndDateRange(childId, startDate, endDate);
+        List<Session> sessions = sessionRepository.findAllByChildIdAndSessionDateBetween(childId, startDate, endDate);
 
         return sessions.stream()
                 .map(SessionResponse::from)

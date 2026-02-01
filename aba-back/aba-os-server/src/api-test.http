@@ -162,5 +162,31 @@ Authorization: Bearer {{auth_token}}
 GET http://localhost:8080/api/v1/sessions/{{session_id}}
 Authorization: Bearer {{auth_token}}
 
+### 13. 리포트 생성 (Create Report)
+# 2월 한 달간의 데이터를 집계 (title 필드 추가됨)
+POST http://localhost:8080/api/v1/reports
+Content-Type: application/json
+Authorization: Bearer {{auth_token}}
 
+{
+  "childId": "{{child_id}}",
+  "title": "2026년 2월 발달 리포트",
+  "periodStart": "2026-02-01",
+  "periodEnd": "2026-02-28"
+}
+
+> {%
+    // 생성된 리포트 ID를 저장합니다.
+    client.global.set("report_id", response.body.data.id);
+    client.log("Report ID saved: " + response.body.data.id);
+%}
+
+### 14. 리포트 목록 조회 (Get Report List)
+GET http://localhost:8080/api/v1/reports?childId={{child_id}}
+Authorization: Bearer {{auth_token}}
+
+### 15. 리포트 상세 조회 (Get Report Detail)
+# 통계(총 세션, 시도, 정확도)와 content(AI 템플릿 문구)를 확인하세요.
+GET http://localhost:8080/api/v1/reports/{{report_id}}
+Authorization: Bearer {{auth_token}}
 

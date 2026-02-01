@@ -58,7 +58,7 @@ public class ReportService {
         }
 
         // 기간 내 세션 조회 (trials 포함)
-        List<Session> sessions = sessionRepository.findByChildIdAndDateRange(
+        List<Session> sessions = sessionRepository.findAllByChildIdAndSessionDateBetween(
                 request.getChildId(),
                 request.getPeriodStart(),
                 request.getPeriodEnd()

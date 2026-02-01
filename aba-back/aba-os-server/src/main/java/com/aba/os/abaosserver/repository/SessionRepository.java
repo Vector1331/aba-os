@@ -29,19 +29,10 @@ public interface SessionRepository extends JpaRepository<Session, UUID> {
     List<Session> findByChildIdWithDetails(@Param("childId") UUID childId);
 
     // 기간 필터링 포함 목록 조회
-    @Query("SELECT DISTINCT s FROM Session s " +
-            "JOIN FETCH s.child c " +
-            "JOIN FETCH s.therapist t " +
-            "JOIN FETCH t.user " +
-            "LEFT JOIN FETCH s.trials " +
-            "WHERE c.id = :childId " +
-            "AND (:startDate IS NULL OR s.sessionDate >= :startDate) " +
-            "AND (:endDate IS NULL OR s.sessionDate <= :endDate) " +
-            "ORDER BY s.sessionDate DESC")
-    List<Session> findByChildIdAndDateRange(
-            @Param("childId") UUID childId,
-            @Param("startDate") LocalDate startDate,
-            @Param("endDate") LocalDate endDate);
+    List<Session> findAllByChildIdAndSessionDateBetween(
+            UUID childId,
+            LocalDate startDate,
+            LocalDate endDate);
 
     // 상세 조회용 (시행 기록의 목표 정보까지 fetch)
     @Query("SELECT s FROM Session s " +
