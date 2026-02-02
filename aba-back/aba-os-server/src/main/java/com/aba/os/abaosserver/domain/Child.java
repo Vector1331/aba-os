@@ -5,6 +5,8 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.springframework.data.domain.Persistable;
+
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -15,11 +17,15 @@ import java.util.UUID;
 @AllArgsConstructor
 @Builder
 @Table(name = "children")
-public class Child {
+public class Child implements Persistable<UUID> {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
+
+    @Transient
+    @Builder.Default
+    private boolean isNew = true;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "center_id", nullable = false)
@@ -70,6 +76,17 @@ public class Child {
         if (this.lastSessionDate == null || sessionDate.isAfter(this.lastSessionDate)) {
             this.lastSessionDate = sessionDate;
         }
+    }
+
+    @PostLoad
+    @PostPersist
+    private void markNotNew() {
+        this.isNew = false;
+    }
+
+    @Override
+    public boolean isNew() {
+        return isNew;
     }
 
     public enum Gender {

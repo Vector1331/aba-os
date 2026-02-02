@@ -63,9 +63,7 @@ public class MigrationService {
                 .orElseThrow(() -> new IllegalArgumentException("센터를 찾을 수 없습니다."));
 
         // 기본 치료사 조회 (마이그레이션용 - 센터의 첫 번째 치료사 사용)
-        Therapist defaultTherapist = therapistRepository.findByCenter_Id(centerId)
-                .stream()
-                .findFirst()
+        Therapist defaultTherapist = therapistRepository.findFirstByCenter_Id(centerId)
                 .orElseThrow(() -> new IllegalArgumentException("센터에 등록된 치료사가 없습니다. 먼저 치료사를 등록해주세요."));
 
         List<String> errors = new ArrayList<>();

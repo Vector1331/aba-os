@@ -5,7 +5,8 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import java.time.LocalDateTime;
+import org.springframework.data.domain.Persistable;
+
 import java.util.UUID;
 
 @Entity
@@ -14,11 +15,15 @@ import java.util.UUID;
 @AllArgsConstructor
 @Builder
 @Table(name = "therapists")
-public class Therapist {
+public class Therapist implements Persistable<UUID> {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
+
+    @Transient
+    @Builder.Default
+    private boolean isNew = true;
 
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false, unique = true)
@@ -33,6 +38,17 @@ public class Therapist {
 
     @Column(name = "experience_years")
     private Integer experienceYears; // 경력
+
+    @PostLoad
+    @PostPersist
+    private void markNotNew() {
+        this.isNew = false;
+    }
+
+    @Override
+    public boolean isNew() {
+        return isNew;
+    }
 
     public enum TherapistStatus {
         ACTIVE, INACTIVE

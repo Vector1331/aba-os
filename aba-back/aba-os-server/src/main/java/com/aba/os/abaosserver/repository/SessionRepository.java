@@ -53,4 +53,30 @@ public interface SessionRepository extends JpaRepository<Session, UUID> {
     // Dashboard: 미래 예정 세션 조회 (최대 5개, 날짜 오름차순)
     List<Session> findTop5ByChild_Center_IdAndSessionDateGreaterThanEqualOrderBySessionDateAsc(
             UUID centerId, LocalDate fromDate);
+
+    // Dashboard: 예정 세션 조회 (N+1 방지 Fetch Join)
+    @Query("SELECT s FROM Session s " +
+            "JOIN FETCH s.child c " +
+            "JOIN FETCH s.therapist t " +
+            "JOIN FETCH t.user u " +
+            "WHERE c.center.id = :centerId " +
+            "AND s.sessionDate >= :fromDate " +
+            "ORDER BY s.sessionDate ASC " +
+            "LIMIT 5")
+    List<Session> findUpcomingSessionsWithDetails(
+            @Param("centerId") UUID centerId,
+            @Param("fromDate") LocalDate fromDate);
+
+    // 세션 목록 조회 (기간 필터링 + Fetch Join)
+    @Query("SELECT DISTINCT s FROM Session s " +
+            "JOIN FETCH s.child c " +
+            "JOIN FETCH s.therapist t " +
+            "JOIN FETCH t.user u " +
+            "WHERE c.id = :childId " +
+            "AND s.sessionDate BETWEEN :startDate AND :endDate " +
+            "ORDER BY s.sessionDate DESC")
+    List<Session> findByChildIdAndDateRangeWithDetails(
+            @Param("childId") UUID childId,
+            @Param("startDate") LocalDate startDate,
+            @Param("endDate") LocalDate endDate);
 }

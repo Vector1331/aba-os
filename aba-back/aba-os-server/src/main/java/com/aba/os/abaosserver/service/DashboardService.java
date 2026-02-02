@@ -47,9 +47,9 @@ public class DashboardService {
         long totalSessionsThisMonth = sessionRepository.countByChild_Center_IdAndSessionDateBetween(
                 centerId, monthStart, monthEnd);
 
-        // 4. 예정된 세션 목록 (오늘 이후, 최대 5개)
+        // 4. 예정된 세션 목록 (오늘 이후, 최대 5개) - Fetch Join으로 N+1 방지
         List<Session> upcomingSessionEntities = sessionRepository
-                .findTop5ByChild_Center_IdAndSessionDateGreaterThanEqualOrderBySessionDateAsc(centerId, today);
+                .findUpcomingSessionsWithDetails(centerId, today);
 
         List<UpcomingSessionDto> upcomingSessions = upcomingSessionEntities.stream()
                 .map(this::toUpcomingSessionDto)
