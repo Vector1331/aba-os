@@ -32,6 +32,7 @@ public class ReportService {
     private final SessionRepository sessionRepository;
     private final ChildRepository childRepository;
     private final SecurityUtil securityUtil;
+    private final OpenAiService openAiService;
 
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd");
 
@@ -84,8 +85,15 @@ public class ReportService {
                     .divide(BigDecimal.valueOf(totalTrials), 2, RoundingMode.HALF_UP);
         }
 
-        // 자동 코멘트 생성
-        String content = generateAutoComment(
+        // 세션 노트 수집 (AI 프롬프트용)
+        String combinedNotes = sessions.stream()
+                .filter(s -> s.getNotes() != null && !s.getNotes().isBlank())
+                .map(Session::getNotes)
+                .limit(5) // 최근 5개 세션 노트만
+                .collect(Collectors.joining("; "));
+
+        // 자동 코멘트 생성 (통계 기반)
+        String statisticsComment = generateAutoComment(
                 request.getPeriodStart(),
                 request.getPeriodEnd(),
                 totalSessions,
@@ -94,6 +102,19 @@ public class ReportService {
                 averageAccuracy,
                 child.getName()
         );
+
+        // AI 전문가 소견 생성 (API 키 없으면 더미 데이터 사용)
+        String aiComment = openAiService.generateReportComment(
+                child.getName(),
+                totalSessions,
+                totalTrials,
+                totalSuccesses,
+                averageAccuracy,
+                combinedNotes
+        );
+
+        // 통계 + AI 소견 결합
+        String content = statisticsComment + "\n\n[전문가 소견]\n" + aiComment;
 
         // Report 엔티티 생성 및 저장
         Report report = Report.builder()

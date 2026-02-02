@@ -1,3 +1,15 @@
+# ===============================================
+# ABA-OS API 테스트 파일
+# ===============================================
+#
+# Swagger UI 접속 URL:
+# http://localhost:8080/swagger-ui/index.html
+#
+# OpenAPI 문서 (JSON):
+# http://localhost:8080/v3/api-docs
+#
+# ===============================================
+
 #INSERT INTO centers (id, name, invite_code, address, created_at)
 #VALUES (
 #  gen_random_uuid(),
