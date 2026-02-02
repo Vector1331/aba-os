@@ -5,6 +5,7 @@ import com.aba.os.abaosserver.dto.session.*;
 import com.aba.os.abaosserver.repository.*;
 import com.aba.os.abaosserver.security.SecurityUtil;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -13,6 +14,7 @@ import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -136,5 +138,27 @@ public class SessionService {
         }
 
         return SessionDetailResponse.from(session);
+    }
+
+    /**
+     * 세션 삭제 (연관된 SessionTrial도 함께 삭제)
+     */
+    @Transactional
+    public void deleteSession(UUID sessionId) {
+        UUID centerId = securityUtil.getCurrentCenterId();
+
+        Session session = sessionRepository.findById(sessionId)
+                .orElseThrow(() -> new IllegalArgumentException("세션을 찾을 수 없습니다."));
+
+        // 권한 검증: 같은 센터 소속인지
+        if (!session.getChild().getCenter().getId().equals(centerId)) {
+            throw new IllegalArgumentException("접근 권한이 없습니다.");
+        }
+
+        // SessionTrial은 cascade로 삭제되거나, 명시적으로 삭제
+        sessionTrialRepository.deleteAllBySessionId(sessionId);
+        sessionRepository.delete(session);
+
+        log.info("세션 삭제 완료 - ID: {}, 아동: {}", sessionId, session.getChild().getName());
     }
 }

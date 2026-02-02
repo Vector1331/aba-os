@@ -79,4 +79,6 @@ public interface SessionRepository extends JpaRepository<Session, UUID> {
             @Param("childId") UUID childId,
             @Param("startDate") LocalDate startDate,
             @Param("endDate") LocalDate endDate);
+
+    void deleteAllByChildId(UUID childId);
 }

@@ -62,6 +62,12 @@ public class User implements Persistable<UUID> {
         this.lastLoginAt = lastLoginAt;
     }
 
+    public void updateProfile(String name) {
+        if (name != null && !name.isBlank()) {
+            this.name = name;
+        }
+    }
+
     @PostLoad
     @PostPersist
     private void markNotNew() {

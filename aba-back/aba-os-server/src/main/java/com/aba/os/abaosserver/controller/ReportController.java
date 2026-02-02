@@ -62,8 +62,21 @@ public class ReportController {
      * GET /api/v1/reports/{id}
      */
     @GetMapping("/{id}")
+    @Operation(summary = "리포트 상세 조회", description = "리포트의 상세 정보와 통계를 조회합니다.")
     public ResponseEntity<ApiResponse<ReportResponse>> getReportDetail(@PathVariable UUID id) {
         ReportResponse report = reportService.getReportDetail(id);
         return ResponseEntity.ok(ApiResponse.success(report));
+    }
+
+    /**
+     * 리포트 삭제
+     * DELETE /api/v1/reports/{id}
+     */
+    @DeleteMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'THERAPIST')")
+    @Operation(summary = "리포트 삭제", description = "리포트를 삭제합니다. 같은 센터 소속의 Admin/Therapist만 삭제 가능합니다.")
+    public ResponseEntity<ApiResponse<String>> deleteReport(@PathVariable UUID id) {
+        reportService.deleteReport(id);
+        return ResponseEntity.ok(ApiResponse.success("리포트가 삭제되었습니다."));
     }
 }

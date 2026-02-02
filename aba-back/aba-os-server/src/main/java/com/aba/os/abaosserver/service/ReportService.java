@@ -156,6 +156,26 @@ public class ReportService {
     }
 
     /**
+     * 리포트 삭제
+     * - 같은 센터 소속의 Admin/Therapist만 삭제 가능
+     */
+    @Transactional
+    public void deleteReport(UUID reportId) {
+        UUID centerId = securityUtil.getCurrentCenterId();
+
+        Report report = reportRepository.findByIdWithChild(reportId)
+                .orElseThrow(() -> new IllegalArgumentException("리포트를 찾을 수 없습니다."));
+
+        // 권한 검증: 같은 센터 소속인지
+        if (!report.getChild().getCenter().getId().equals(centerId)) {
+            throw new IllegalArgumentException("접근 권한이 없습니다.");
+        }
+
+        reportRepository.delete(report);
+        log.info("리포트 삭제 완료 - ID: {}, 제목: {}", reportId, report.getTitle());
+    }
+
+    /**
      * 통계 계산
      */
     private StatisticsResult calculateStatistics(List<Session> sessions) {

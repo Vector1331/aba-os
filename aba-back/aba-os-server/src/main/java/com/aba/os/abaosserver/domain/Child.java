@@ -78,6 +78,18 @@ public class Child implements Persistable<UUID> {
         }
     }
 
+    public void update(String name, LocalDate birthDate, Gender gender, String diagnosis,
+                       String currentDevLevel, String parentCharacteristics, String requestDetails, String status) {
+        if (name != null) this.name = name;
+        if (birthDate != null) this.birthDate = birthDate;
+        if (gender != null) this.gender = gender;
+        if (diagnosis != null) this.diagnosis = diagnosis;
+        if (currentDevLevel != null) this.currentDevLevel = currentDevLevel;
+        if (parentCharacteristics != null) this.parentCharacteristics = parentCharacteristics;
+        if (requestDetails != null) this.requestDetails = requestDetails;
+        if (status != null) this.status = status;
+    }
+
     @PostLoad
     @PostPersist
     private void markNotNew() {

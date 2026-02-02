@@ -281,3 +281,68 @@ Content-Type: image/jpeg
 < ./test-data/migration_image_ex3.jpeg
 ------WebKitFormBoundary7MA4YWxkTrZu0gW--
 
+### ===============================================
+### 아래는 수정/삭제 API (Missing API)
+### ===============================================
+
+### 19. 내 정보 조회 (Get My Profile)
+GET http://localhost:8080/api/v1/users/me
+Authorization: Bearer {{auth_token}}
+
+### 20. 내 정보 수정 (Update My Profile)
+PUT http://localhost:8080/api/v1/users/me
+Content-Type: application/json
+Authorization: Bearer {{auth_token}}
+
+{
+  "name": "김치료사(수정됨)"
+}
+
+### 21. 아동 정보 수정 (Update Child) - Admin Only
+# 먼저 4번(Admin Login)을 실행해서 admin 토큰을 받으세요.
+PUT http://localhost:8080/api/v1/children/{{child_id}}
+Content-Type: application/json
+Authorization: Bearer {{auth_token}}
+
+{
+  "name": "김영희(수정)",
+  "diagnosis": "자폐 스펙트럼 장애 (ASD) - 경증",
+  "currentDevLevel": "눈 맞춤 개선 중, 단어 발화 증가"
+}
+
+### 22. 목표 상세 조회 (Get Goal Detail)
+GET http://localhost:8080/api/v1/goals/{{goal_id}}
+Authorization: Bearer {{auth_token}}
+
+### 23. 목표 수정 (Update Goal)
+PUT http://localhost:8080/api/v1/goals/{{goal_id}}
+Content-Type: application/json
+Authorization: Bearer {{auth_token}}
+
+{
+  "name": "5분간 한 가지 일에 집중 (수정됨)",
+  "status": "IN_PROGRESS",
+  "targetSuccessRate": 70
+}
+
+### 24. 목표 삭제 (Delete Goal)
+# ⚠️ 주의: 실행하면 목표가 삭제됩니다.
+DELETE http://localhost:8080/api/v1/goals/{{goal_id}}
+Authorization: Bearer {{auth_token}}
+
+### 25. 세션 삭제 (Delete Session)
+# ⚠️ 주의: 실행하면 세션과 시행 기록이 함께 삭제됩니다.
+DELETE http://localhost:8080/api/v1/sessions/{{session_id}}
+Authorization: Bearer {{auth_token}}
+
+### 26. 리포트 삭제 (Delete Report)
+# ⚠️ 주의: 실행하면 리포트가 삭제됩니다.
+DELETE http://localhost:8080/api/v1/reports/{{report_id}}
+Authorization: Bearer {{auth_token}}
+
+### 27. 아동 삭제 (Delete Child) - Admin Only
+# ⚠️ 주의: 실행하면 아동과 연관된 모든 데이터(목표, 세션)가 삭제됩니다.
+# 먼저 4번(Admin Login)을 실행해서 admin 토큰을 받으세요.
+DELETE http://localhost:8080/api/v1/children/{{child_id}}
+Authorization: Bearer {{auth_token}}
+

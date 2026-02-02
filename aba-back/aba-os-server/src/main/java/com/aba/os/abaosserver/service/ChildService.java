@@ -7,9 +7,11 @@ import com.aba.os.abaosserver.domain.Therapist;
 import com.aba.os.abaosserver.dto.child.ChildCreateRequest;
 import com.aba.os.abaosserver.dto.child.ChildDetailResponse;
 import com.aba.os.abaosserver.dto.child.ChildListResponse;
+import com.aba.os.abaosserver.dto.child.ChildUpdateRequest;
 import com.aba.os.abaosserver.repository.*;
 import com.aba.os.abaosserver.security.SecurityUtil;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -17,6 +19,7 @@ import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -91,5 +94,57 @@ public class ChildService {
 
         Child savedChild = childRepository.save(child);
         return savedChild.getId();
+    }
+
+    /**
+     * 아동 정보 수정
+     */
+    @Transactional
+    public void updateChild(UUID childId, ChildUpdateRequest request) {
+        UUID centerId = securityUtil.getCurrentCenterId();
+
+        Child child = childRepository.findById(childId)
+                .orElseThrow(() -> new IllegalArgumentException("아동을 찾을 수 없습니다."));
+
+        // 권한 검증: 같은 센터 소속인지
+        if (!child.getCenter().getId().equals(centerId)) {
+            throw new IllegalArgumentException("접근 권한이 없습니다.");
+        }
+
+        child.update(
+                request.getName(),
+                request.getBirthDate(),
+                request.getGender(),
+                request.getDiagnosis(),
+                request.getCurrentDevLevel(),
+                request.getParentCharacteristics(),
+                request.getRequestDetails(),
+                request.getStatus()
+        );
+
+        log.info("아동 정보 수정 완료 - ID: {}, 이름: {}", childId, child.getName());
+    }
+
+    /**
+     * 아동 삭제 (연관 데이터 Cascade 삭제)
+     */
+    @Transactional
+    public void deleteChild(UUID childId) {
+        UUID centerId = securityUtil.getCurrentCenterId();
+
+        Child child = childRepository.findById(childId)
+                .orElseThrow(() -> new IllegalArgumentException("아동을 찾을 수 없습니다."));
+
+        // 권한 검증: 같은 센터 소속인지
+        if (!child.getCenter().getId().equals(centerId)) {
+            throw new IllegalArgumentException("접근 권한이 없습니다.");
+        }
+
+        // 연관 데이터 삭제 (Goal, Session)
+        goalRepository.deleteAllByChildId(childId);
+        sessionRepository.deleteAllByChildId(childId);
+
+        childRepository.delete(child);
+        log.info("아동 삭제 완료 - ID: {}, 이름: {}", childId, child.getName());
     }
 }

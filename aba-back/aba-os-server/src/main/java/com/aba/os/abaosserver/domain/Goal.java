@@ -56,6 +56,17 @@ public class Goal {
         this.createdAt = LocalDateTime.now();
     }
 
+    public void update(String name, GoalCategory category, String description, GoalStatus status,
+                       Integer targetSuccessRate, Integer consecutiveDays, String promptPlan) {
+        if (name != null) this.name = name;
+        if (category != null) this.category = category;
+        if (description != null) this.description = description;
+        if (status != null) this.status = status;
+        if (targetSuccessRate != null) this.targetSuccessRate = targetSuccessRate;
+        if (consecutiveDays != null) this.consecutiveDays = consecutiveDays;
+        if (promptPlan != null) this.promptPlan = promptPlan;
+    }
+
     public enum GoalCategory {
         COMMUNICATION, SOCIAL, SENSORY, SELF_CARE, COGNITIVE, MOTOR, PLAY, BEHAVIOR
     }

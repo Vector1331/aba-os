@@ -15,4 +15,6 @@ public interface SessionTrialRepository extends JpaRepository<SessionTrial, UUID
     List<SessionTrial> findByGoalId(UUID goalId);
 
     long countBySessionId(UUID sessionId);
+
+    void deleteAllBySessionId(UUID sessionId);
 }

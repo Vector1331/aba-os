@@ -16,4 +16,6 @@ public interface GoalRepository extends JpaRepository<Goal, UUID> {
     List<Goal> findByChildIdAndStatus(UUID childId, GoalStatus status);
 
     long countByChildIdAndStatus(UUID childId, GoalStatus status);
+
+    void deleteAllByChildId(UUID childId);
 }
