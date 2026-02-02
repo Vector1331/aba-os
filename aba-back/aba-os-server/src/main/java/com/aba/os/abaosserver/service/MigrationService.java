@@ -4,7 +4,10 @@ import com.aba.os.abaosserver.domain.Center;
 import com.aba.os.abaosserver.domain.Child;
 import com.aba.os.abaosserver.domain.Goal;
 import com.aba.os.abaosserver.domain.Goal.GoalCategory;
+import com.aba.os.abaosserver.domain.Goal.GoalStatus;
 import com.aba.os.abaosserver.domain.Therapist;
+import com.aba.os.abaosserver.dto.migration.ExtractedChildData;
+import com.aba.os.abaosserver.dto.migration.ImageMigrationResponse;
 import com.aba.os.abaosserver.dto.migration.MigrationResponse;
 import com.aba.os.abaosserver.repository.CenterRepository;
 import com.aba.os.abaosserver.repository.ChildRepository;
@@ -36,8 +39,13 @@ public class MigrationService {
     private final CenterRepository centerRepository;
     private final TherapistRepository therapistRepository;
     private final SecurityUtil securityUtil;
+    private final OpenAiService openAiService;
 
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+    private static final Set<String> SUPPORTED_IMAGE_TYPES = Set.of(
+            "image/jpeg", "image/jpg", "image/png", "image/webp", "image/gif"
+    );
+    private static final long MAX_IMAGE_SIZE = 20 * 1024 * 1024; // 20MB
 
     /**
      * 엑셀 파일 업로드 및 데이터 마이그레이션
@@ -293,6 +301,253 @@ public class MigrationService {
                 case "놀이" -> GoalCategory.PLAY;
                 case "행동" -> GoalCategory.BEHAVIOR;
                 default -> GoalCategory.BEHAVIOR;
+            };
+        }
+    }
+
+    // ==================== 이미지 기반 마이그레이션 ====================
+
+    /**
+     * 이미지에서 아동 데이터 추출 및 저장 (Vision AI 사용)
+     * - No-Storage Strategy: 이미지를 디스크에 저장하지 않고 메모리에서 처리
+     */
+    @Transactional
+    public ImageMigrationResponse migrateFromImage(MultipartFile file) {
+        UUID centerId = securityUtil.getCurrentCenterId();
+        List<String> errors = new ArrayList<>();
+
+        // 1. 파일 검증
+        String validationError = validateImageFile(file);
+        if (validationError != null) {
+            return ImageMigrationResponse.error(validationError, null);
+        }
+
+        // 2. 센터 및 치료사 조회
+        Center center = centerRepository.findById(centerId)
+                .orElseThrow(() -> new IllegalArgumentException("센터를 찾을 수 없습니다."));
+
+        Therapist defaultTherapist = therapistRepository.findFirstByCenter_Id(centerId)
+                .orElseThrow(() -> new IllegalArgumentException(
+                        "센터에 등록된 치료사가 없습니다. 먼저 치료사를 등록해주세요."));
+
+        try {
+            // 3. 이미지를 Base64로 인코딩 (메모리에서 처리)
+            byte[] imageBytes = file.getBytes();
+            String base64Image = Base64.getEncoder().encodeToString(imageBytes);
+            String mimeType = determineMimeType(file);
+
+            log.info("이미지 마이그레이션 시작 - 파일: {}, 크기: {}KB, MIME: {}",
+                    file.getOriginalFilename(),
+                    imageBytes.length / 1024,
+                    mimeType);
+            // 주의: base64Image는 로그에 남기지 않음 (보안 및 로그 폭탄 방지)
+
+            // 4. Vision AI로 데이터 추출
+            ExtractedChildData extractedData = openAiService.extractChildDataFromImage(base64Image, mimeType);
+
+            // Base64 문자열 즉시 해제 (메모리 정리)
+            base64Image = null;
+            imageBytes = null;
+
+            // 5. 추출 데이터 검증
+            if (extractedData.getChildName() == null || extractedData.getChildName().isBlank()) {
+                return ImageMigrationResponse.error(
+                        "이미지에서 아동 이름을 추출할 수 없습니다. 이미지가 흐리거나 텍스트가 없을 수 있습니다.",
+                        List.of("childName is null or empty"));
+            }
+
+            // 6. Child 엔티티 생성 및 저장
+            Child child = createChildFromExtractedData(extractedData, center, defaultTherapist, errors);
+
+            // 중복 체크
+            if (child.getBirthDate() != null &&
+                    childRepository.existsByCenter_IdAndNameAndBirthDate(
+                            centerId, child.getName(), child.getBirthDate())) {
+                log.warn("중복 아동 감지: {} ({})", child.getName(), child.getBirthDate());
+                // 기존 아동 조회
+                child = childRepository.findByCenter_IdAndName(centerId, child.getName())
+                        .orElse(child);
+            } else {
+                child = childRepository.save(child);
+                log.info("아동 저장 완료 - ID: {}, 이름: {}", child.getId(), child.getName());
+            }
+
+            // 7. Goal 엔티티 생성 및 저장
+            int goalsCreated = 0;
+            if (extractedData.getGoals() != null && !extractedData.getGoals().isEmpty()) {
+                goalsCreated = createGoalsFromExtractedData(extractedData.getGoals(), child, errors);
+            }
+
+            // 8. 응답 반환
+            if (errors.isEmpty()) {
+                return ImageMigrationResponse.success(
+                        child.getId(),
+                        child.getName(),
+                        goalsCreated,
+                        extractedData
+                );
+            } else {
+                return ImageMigrationResponse.partialSuccess(
+                        child.getId(),
+                        child.getName(),
+                        goalsCreated,
+                        errors,
+                        extractedData
+                );
+            }
+
+        } catch (IOException e) {
+            log.error("이미지 파일 읽기 실패", e);
+            return ImageMigrationResponse.error(
+                    "이미지 파일을 읽을 수 없습니다: " + e.getMessage(),
+                    List.of(e.getMessage()));
+        } catch (RuntimeException e) {
+            log.error("이미지 마이그레이션 실패", e);
+            return ImageMigrationResponse.error(
+                    "이미지 처리 중 오류가 발생했습니다: " + e.getMessage(),
+                    List.of(e.getMessage()));
+        }
+    }
+
+    /**
+     * 이미지 파일 검증
+     */
+    private String validateImageFile(MultipartFile file) {
+        if (file == null || file.isEmpty()) {
+            return "파일이 비어있습니다.";
+        }
+
+        String contentType = file.getContentType();
+        if (contentType == null || !SUPPORTED_IMAGE_TYPES.contains(contentType.toLowerCase())) {
+            return "지원하지 않는 이미지 형식입니다. (지원 형식: JPEG, PNG, WebP, GIF)";
+        }
+
+        if (file.getSize() > MAX_IMAGE_SIZE) {
+            return "파일 크기가 너무 큽니다. (최대: 20MB)";
+        }
+
+        return null; // 검증 통과
+    }
+
+    /**
+     * MIME 타입 결정
+     */
+    private String determineMimeType(MultipartFile file) {
+        String contentType = file.getContentType();
+        if (contentType != null && SUPPORTED_IMAGE_TYPES.contains(contentType.toLowerCase())) {
+            return contentType;
+        }
+
+        // 파일 확장자로 폴백
+        String filename = file.getOriginalFilename();
+        if (filename != null) {
+            String lower = filename.toLowerCase();
+            if (lower.endsWith(".jpg") || lower.endsWith(".jpeg")) {
+                return "image/jpeg";
+            } else if (lower.endsWith(".png")) {
+                return "image/png";
+            } else if (lower.endsWith(".webp")) {
+                return "image/webp";
+            } else if (lower.endsWith(".gif")) {
+                return "image/gif";
+            }
+        }
+
+        return "image/jpeg"; // 기본값
+    }
+
+    /**
+     * 추출 데이터로 Child 엔티티 생성
+     */
+    private Child createChildFromExtractedData(ExtractedChildData data, Center center,
+                                                Therapist therapist, List<String> errors) {
+        LocalDate birthDate = null;
+        if (data.getBirthDate() != null && !data.getBirthDate().isBlank()) {
+            try {
+                birthDate = LocalDate.parse(data.getBirthDate(), DATE_FORMATTER);
+            } catch (DateTimeParseException e) {
+                errors.add("생년월일 파싱 실패: " + data.getBirthDate());
+                log.warn("생년월일 파싱 실패: {}", data.getBirthDate());
+            }
+        }
+
+        Child.Gender gender = Child.Gender.MALE; // 기본값
+        if (data.getGender() != null) {
+            String genderStr = data.getGender().toUpperCase().trim();
+            if (genderStr.equals("FEMALE") || genderStr.equals("F") ||
+                    genderStr.equals("여") || genderStr.equals("여자")) {
+                gender = Child.Gender.FEMALE;
+            }
+        }
+
+        return Child.builder()
+                .center(center)
+                .therapist(therapist)
+                .name(data.getChildName().trim())
+                .birthDate(birthDate)
+                .gender(gender)
+                .diagnosis(data.getDiagnosis())
+                .status("active")
+                .build();
+    }
+
+    /**
+     * 추출된 목표 데이터로 Goal 엔티티들 생성
+     */
+    private int createGoalsFromExtractedData(List<ExtractedChildData.ExtractedGoal> extractedGoals,
+                                              Child child, List<String> errors) {
+        int created = 0;
+
+        for (ExtractedChildData.ExtractedGoal extractedGoal : extractedGoals) {
+            try {
+                if (extractedGoal.getTitle() == null || extractedGoal.getTitle().isBlank()) {
+                    errors.add("목표 제목이 비어있어 건너뜀");
+                    continue;
+                }
+
+                GoalCategory category = parseCategory(extractedGoal.getCategory());
+                GoalStatus status = parseGoalStatus(extractedGoal.getStatus());
+
+                Goal goal = Goal.builder()
+                        .child(child)
+                        .name(extractedGoal.getTitle().trim())
+                        .category(category)
+                        .status(status)
+                        .description(extractedGoal.getDescription())
+                        .build();
+
+                goalRepository.save(goal);
+                created++;
+                log.debug("목표 생성: {} ({})", goal.getName(), category);
+
+            } catch (Exception e) {
+                errors.add("목표 생성 실패: " + extractedGoal.getTitle() + " - " + e.getMessage());
+                log.warn("목표 생성 실패: {}", e.getMessage());
+            }
+        }
+
+        log.info("총 {}개 목표 생성 완료", created);
+        return created;
+    }
+
+    /**
+     * 목표 상태 문자열 파싱
+     */
+    private GoalStatus parseGoalStatus(String statusStr) {
+        if (statusStr == null || statusStr.isBlank()) {
+            return GoalStatus.IN_PROGRESS; // 기본값
+        }
+
+        try {
+            return GoalStatus.valueOf(statusStr.toUpperCase().trim());
+        } catch (IllegalArgumentException e) {
+            // 한글 매핑
+            return switch (statusStr.trim()) {
+                case "진행중", "진행 중", "수행중" -> GoalStatus.IN_PROGRESS;
+                case "대기", "미시작" -> GoalStatus.WAITING;
+                case "완료", "달성" -> GoalStatus.COMPLETED;
+                case "유지" -> GoalStatus.MAINTENANCE;
+                default -> GoalStatus.IN_PROGRESS;
             };
         }
     }

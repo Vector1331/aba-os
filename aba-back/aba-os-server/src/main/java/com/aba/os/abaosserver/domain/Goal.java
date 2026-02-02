@@ -61,6 +61,12 @@ public class Goal {
     }
 
     public enum GoalStatus {
-        ACTIVE, ACHIEVED, PAUSED
+        ACTIVE,         // 진행 중 (= IN_PROGRESS)
+        ACHIEVED,       // 달성 완료 (= COMPLETED)
+        PAUSED,         // 일시 중단
+        WAITING,        // 대기 중 (미시작)
+        IN_PROGRESS,    // 진행 중 (ACTIVE와 동일 용도)
+        COMPLETED,      // 완료 (ACHIEVED와 동일 용도)
+        MAINTENANCE     // 유지
     }
 }
