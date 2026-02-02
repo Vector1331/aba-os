@@ -5,6 +5,7 @@ import com.aba.os.abaosserver.dto.session.SessionCreateRequest;
 import com.aba.os.abaosserver.dto.session.SessionDetailResponse;
 import com.aba.os.abaosserver.dto.session.SessionResponse;
 import com.aba.os.abaosserver.service.SessionService;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -18,6 +19,7 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/api/v1/sessions")
 @RequiredArgsConstructor
+@Tag(name = "3. 세션 (Session)", description = "치료 세션 기록 API")
 public class SessionController {
 
     private final SessionService sessionService;

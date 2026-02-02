@@ -3,6 +3,7 @@ package com.aba.os.abaosserver.controller;
 import com.aba.os.abaosserver.common.ApiResponse;
 import com.aba.os.abaosserver.dto.migration.MigrationResponse;
 import com.aba.os.abaosserver.service.MigrationService;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -16,6 +17,7 @@ import org.springframework.web.multipart.MultipartFile;
 @RestController
 @RequestMapping("/api/v1/migration")
 @RequiredArgsConstructor
+@Tag(name = "6. 마이그레이션 (Migration)", description = "엑셀 데이터 마이그레이션 API (Admin 전용)")
 public class MigrationController {
 
     private final MigrationService migrationService;

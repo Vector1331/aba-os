@@ -5,6 +5,8 @@ import com.aba.os.abaosserver.dto.report.ReportCreateRequest;
 import com.aba.os.abaosserver.dto.report.ReportListResponse;
 import com.aba.os.abaosserver.dto.report.ReportResponse;
 import com.aba.os.abaosserver.service.ReportService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -17,6 +19,7 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/api/v1/reports")
 @RequiredArgsConstructor
+@Tag(name = "4. 리포트 (Report)", description = "AI 기반 발달 리포트 생성 API")
 public class ReportController {
 
     private final ReportService reportService;
@@ -27,6 +30,16 @@ public class ReportController {
      */
     @PostMapping
     @PreAuthorize("hasAnyRole('ADMIN', 'THERAPIST')")
+    @Operation(
+            summary = "AI 리포트 생성",
+            description = """
+                    기간 내 세션 데이터를 집계하고 AI 기반 전문가 소견을 생성합니다.
+
+                    **AI 기능:**
+                    - OpenAI API 키 설정 시: GPT가 부모님께 드릴 치료 총평 작성
+                    - API 키 미설정 시: 테스트용 더미 텍스트 사용 (에러 없이 정상 동작)
+                    """
+    )
     public ResponseEntity<ApiResponse<ReportResponse>> createReport(
             @Valid @RequestBody ReportCreateRequest request) {
         ReportResponse report = reportService.createReport(request);

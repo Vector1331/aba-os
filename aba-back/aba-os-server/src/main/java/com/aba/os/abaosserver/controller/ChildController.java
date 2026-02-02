@@ -5,6 +5,7 @@ import com.aba.os.abaosserver.dto.child.ChildCreateRequest;
 import com.aba.os.abaosserver.dto.child.ChildDetailResponse;
 import com.aba.os.abaosserver.dto.child.ChildListResponse;
 import com.aba.os.abaosserver.service.ChildService;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -17,6 +18,7 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/api/v1/children")
 @RequiredArgsConstructor
+@Tag(name = "1. 아동 (Child)", description = "아동 등록/조회 API")
 public class ChildController {
 
     private final ChildService childService;
