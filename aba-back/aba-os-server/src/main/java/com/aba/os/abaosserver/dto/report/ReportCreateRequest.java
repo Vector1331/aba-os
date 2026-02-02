@@ -1,5 +1,6 @@
 package com.aba.os.abaosserver.dto.report;
 
+import com.aba.os.abaosserver.domain.Report.ReportType;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
@@ -23,4 +24,7 @@ public class ReportCreateRequest {
 
     @NotNull(message = "종료 날짜는 필수입니다")
     private LocalDate periodEnd;
+
+    // 기본값: PARENT_SUMMARY (AI 생성)
+    private ReportType reportType = ReportType.PARENT_SUMMARY;
 }

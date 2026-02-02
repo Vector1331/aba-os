@@ -53,6 +53,11 @@ public class Report {
     private String content; // 자동 생성 문구 / AI 요약
 
     @Enumerated(EnumType.STRING)
+    @Column(name = "report_type", nullable = false, length = 30)
+    @Builder.Default
+    private ReportType reportType = ReportType.STATISTICS_ONLY;
+
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
     @Builder.Default
     private ReportStatus status = ReportStatus.GENERATED;
@@ -69,5 +74,12 @@ public class Report {
         GENERATED,  // 생성됨
         REVIEWED,   // 검토됨
         PUBLISHED   // 발행됨
+    }
+
+    public enum ReportType {
+        STATISTICS_ONLY,    // 통계만 (AI 없음)
+        PARENT_SUMMARY,     // 부모용 요약 (AI 생성)
+        THERAPIST_NOTE,     // 치료사 기록용
+        PROGRESS_REPORT     // 진도 리포트
     }
 }

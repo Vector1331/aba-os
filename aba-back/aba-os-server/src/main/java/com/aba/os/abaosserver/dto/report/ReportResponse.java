@@ -2,6 +2,7 @@ package com.aba.os.abaosserver.dto.report;
 
 import com.aba.os.abaosserver.domain.Report;
 import com.aba.os.abaosserver.domain.Report.ReportStatus;
+import com.aba.os.abaosserver.domain.Report.ReportType;
 import lombok.Builder;
 import lombok.Getter;
 
@@ -22,6 +23,7 @@ public class ReportResponse {
     private LocalDate periodEnd;
     private ReportStats stats;
     private String content;
+    private ReportType reportType;
     private ReportStatus status;
     private LocalDateTime createdAt;
 
@@ -51,6 +53,7 @@ public class ReportResponse {
                 .periodEnd(report.getPeriodEnd())
                 .stats(stats)
                 .content(report.getContent())
+                .reportType(report.getReportType())
                 .status(report.getStatus())
                 .createdAt(report.getCreatedAt())
                 .build();
