@@ -4,3 +4,4 @@ docs/API_SPEC.md
 docs/DATABASE_SCHEMA.md
 docs/FEATURE_LIST.md
 .claude/settings.local.json
+aba-back/aba-os-server/src/main/resources/application.yml
