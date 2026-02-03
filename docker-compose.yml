@@ -44,8 +44,8 @@ services:
       - "80:80"
       - "443:443"   
     volumes:        
-      - ./nginx/certs/fullchain.pem:/etc/nginx/certs/fullchain.pem:ro
-      - ./nginx/certs/privkey.pem:/etc/nginx/certs/privkey.pem:ro
+      - /etc/letsencrypt/live/dearone.kr-0001/fullchain.pem:/etc/nginx/certs/fullchain.pem:ro
+      - /etc/letsencrypt/live/dearone.kr-0001/privkey.pem:/etc/nginx/certs/privkey.pem:ro
     depends_on:
       - backend
     networks:
