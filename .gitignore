@@ -6,3 +6,7 @@ docs/FEATURE_LIST.md
 .claude/settings.local.json
 aba-back/aba-os-server/src/main/resources/application.yml
 aba-back/aba-os-server/src/main/resources/application.yml
+*.pem
+.env
+*.yml
+aba-front/aba-os-demo-click-main/aba-os-demo-click-main/nginx.conf
