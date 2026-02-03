@@ -1,3 +1,6 @@
+*.yml
+*.pem
+*.config
 aba-back/ABA-OS 통합 기능 정의서v1.md
 claude.md
 docs/API_SPEC.md
@@ -5,8 +8,5 @@ docs/DATABASE_SCHEMA.md
 docs/FEATURE_LIST.md
 .claude/settings.local.json
 aba-back/aba-os-server/src/main/resources/application.yml
-aba-back/aba-os-server/src/main/resources/application.yml
-*.pem
 .env
-*.yml
 aba-front/aba-os-demo-click-main/aba-os-demo-click-main/nginx.conf
