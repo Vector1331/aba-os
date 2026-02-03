@@ -20,7 +20,7 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/api/v1/children")
 @RequiredArgsConstructor
-@Tag(name = "1. 아동 (Child)", description = "아동 등록/조회/수정/삭제 API")
+@Tag(name = "2. 아동 관리 (Child)", description = "아동 등록/조회/수정/삭제 API")
 public class ChildController {
 
     private final ChildService childService;

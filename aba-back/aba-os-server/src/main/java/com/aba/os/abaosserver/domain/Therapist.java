@@ -39,6 +39,10 @@ public class Therapist implements Persistable<UUID> {
     @Column(name = "experience_years")
     private Integer experienceYears; // 경력
 
+    @Column(name = "deleted")
+    @Builder.Default
+    private boolean deleted = false; // Soft Delete
+
     @PostLoad
     @PostPersist
     private void markNotNew() {
@@ -48,6 +52,19 @@ public class Therapist implements Persistable<UUID> {
     @Override
     public boolean isNew() {
         return isNew;
+    }
+
+    public void update(String specialty, Integer experienceYears) {
+        if (specialty != null) {
+            this.specialty = specialty;
+        }
+        if (experienceYears != null) {
+            this.experienceYears = experienceYears;
+        }
+    }
+
+    public void softDelete() {
+        this.deleted = true;
     }
 
     public enum TherapistStatus {

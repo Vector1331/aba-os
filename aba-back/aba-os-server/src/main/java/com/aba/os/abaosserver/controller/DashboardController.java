@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/v1/dashboard")
 @RequiredArgsConstructor
-@Tag(name = "5. 대시보드 (Dashboard)", description = "센터 현황 요약 API")
+@Tag(name = "6. 대시보드 (Dashboard)", description = "센터 현황 요약 API")
 public class DashboardController {
 
     private final DashboardService dashboardService;

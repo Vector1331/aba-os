@@ -20,7 +20,7 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/api/v1/sessions")
 @RequiredArgsConstructor
-@Tag(name = "3. 세션 (Session)", description = "치료 세션 기록/삭제 API")
+@Tag(name = "4. 세션 및 데이터 (Session)", description = "치료 세션 기록/삭제 API")
 public class SessionController {
 
     private final SessionService sessionService;

@@ -18,7 +18,7 @@ import java.util.UUID;
 
 @RestController
 @RequiredArgsConstructor
-@Tag(name = "2. 목표 (Goal)", description = "치료 목표 등록/조회/수정/삭제 API")
+@Tag(name = "3. 목표 관리 (Goal)", description = "치료 목표 등록/조회/수정/삭제 API")
 public class GoalController {
 
     private final GoalService goalService;

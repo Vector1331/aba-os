@@ -19,7 +19,7 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/api/v1/reports")
 @RequiredArgsConstructor
-@Tag(name = "4. 리포트 (Report)", description = "AI 기반 발달 리포트 생성 API")
+@Tag(name = "5. 보고서 (Report)", description = "AI 기반 발달 리포트 생성 API")
 public class ReportController {
 
     private final ReportService reportService;

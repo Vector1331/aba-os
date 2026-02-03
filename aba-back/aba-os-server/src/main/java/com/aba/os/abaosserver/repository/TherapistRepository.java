@@ -18,4 +18,13 @@ public interface TherapistRepository extends JpaRepository<Therapist, UUID> {
 
     // Migration: 센터의 첫 번째 치료사 조회 (기본 담당자용)
     Optional<Therapist> findFirstByCenter_Id(UUID centerId);
+
+    // 센터별 삭제되지 않은 치료사 목록 조회
+    List<Therapist> findByCenter_IdAndDeletedFalse(UUID centerId);
+
+    // 삭제되지 않은 치료사 단건 조회
+    Optional<Therapist> findByIdAndDeletedFalse(UUID id);
+
+    // 특정 User가 이미 치료사로 등록되어 있는지 확인
+    boolean existsByUserIdAndDeletedFalse(UUID userId);
 }

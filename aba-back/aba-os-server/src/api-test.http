@@ -9,15 +9,131 @@
 # http://localhost:8080/v3/api-docs
 #
 # ===============================================
+#
+# ** 테스트 계정 (서버 실행 시 자동 생성) **
+# ----------------------------------------
+# Admin:     admin@aba.com / 1234
+# Therapist: teacher@aba.com / 1234
+# Parent:    parent@aba.com / 1234
+# ----------------------------------------
+#
+# ** 테스트 ID (고정) **
+# Center ID:         00000000-0000-0000-0000-000000000001
+# Admin User ID:     00000000-0000-0000-0000-000000000010
+# Therapist User ID: 00000000-0000-0000-0000-000000000011
+# Therapist ID:      00000000-0000-0000-0000-000000000001
+# Parent User ID:    00000000-0000-0000-0000-000000000012
+# Child ID:          00000000-0000-0000-0000-000000000001
+#
+# ===============================================
 
-#INSERT INTO centers (id, name, invite_code, address, created_at)
-#VALUES (
-#  gen_random_uuid(),
-#  'ABA 데모 센터',
-#  'ABA2026',
-#  '서울시 강남구 테헤란로',
-#  NOW()
-#);
+### ===============================================
+### 치료사 관리 API 테스트 (Admin Only)
+### ===============================================
+
+### T-1. Admin 로그인 (토큰 획득용)
+# 치료사 관리 API는 Admin 권한이 필요합니다.
+POST http://localhost:8080/api/v1/auth/login
+Content-Type: application/json
+
+{
+  "email": "admin@aba.com",
+  "password": "1234"
+}
+> {%
+    client.global.set("admin_token", response.body.data.accessToken);
+    client.log("Admin Token saved!");
+%}
+
+### T-2. 치료사 목록 조회 (Get Therapist List)
+# 센터에 소속된 모든 치료사 목록을 조회합니다.
+GET http://localhost:8080/api/v1/therapists
+Authorization: Bearer {{admin_token}}
+
+### T-3. 치료사 상세 조회 (Get Therapist Detail)
+# 특정 치료사의 상세 정보를 조회합니다.
+GET http://localhost:8080/api/v1/therapists/00000000-0000-0000-0000-000000000001
+Authorization: Bearer {{admin_token}}
+
+### T-4. 새 사용자 회원가입 (치료사 등록 준비)
+# 치료사를 등록하려면 먼저 User가 필요합니다.
+POST http://localhost:8080/api/v1/auth/register
+Content-Type: application/json
+
+{
+  "email": "newtherapist@aba.com",
+  "password": "1234",
+  "name": "박치료",
+  "role": "THERAPIST",
+  "inviteCode": "TEST1234"
+}
+
+### T-5. 새로 가입한 사용자로 로그인 (User ID 확인용)
+POST http://localhost:8080/api/v1/auth/login
+Content-Type: application/json
+
+{
+  "email": "newtherapist@aba.com",
+  "password": "1234"
+}
+> {%
+    // 새 사용자의 정보를 확인하려면 /users/me 호출 필요
+    client.global.set("new_therapist_token", response.body.data.accessToken);
+%}
+
+### T-5-1. 새 사용자 정보 조회 (User ID 획득)
+GET http://localhost:8080/api/v1/users/me
+Authorization: Bearer {{new_therapist_token}}
+
+> {%
+    // 응답에서 userId를 저장 (수동으로 복사해서 T-6에 사용)
+    client.log("New User ID: " + response.body.data.id);
+%}
+
+### T-6. 치료사 등록 (Create Therapist)
+# 위에서 생성한 사용자를 치료사로 등록합니다.
+# ⚠️ 주의: userId에 T-5-1에서 얻은 사용자 ID를 넣으세요.
+POST http://localhost:8080/api/v1/therapists
+Content-Type: application/json
+Authorization: Bearer {{admin_token}}
+
+{
+  "userId": "여기에_T-5-1에서_얻은_userId_입력",
+  "specialty": "언어치료",
+  "experienceYears": 5
+}
+> {%
+    client.global.set("new_therapist_id", response.body.data);
+    client.log("New Therapist ID: " + response.body.data);
+%}
+
+### T-7. 치료사 정보 수정 (Update Therapist)
+# 치료사의 전문분야, 경력 등을 수정합니다.
+PUT http://localhost:8080/api/v1/therapists/{{new_therapist_id}}
+Content-Type: application/json
+Authorization: Bearer {{admin_token}}
+
+{
+  "specialty": "ABA 및 언어치료",
+  "experienceYears": 6
+}
+
+### T-8. 수정된 치료사 상세 조회
+GET http://localhost:8080/api/v1/therapists/{{new_therapist_id}}
+Authorization: Bearer {{admin_token}}
+
+### T-9. 치료사 삭제 (Delete Therapist - Soft Delete)
+# ⚠️ 주의: 실행하면 치료사가 삭제(비활성화)됩니다.
+DELETE http://localhost:8080/api/v1/therapists/{{new_therapist_id}}
+Authorization: Bearer {{admin_token}}
+
+### T-10. 삭제 후 치료사 목록 조회 (삭제된 치료사 미포함 확인)
+GET http://localhost:8080/api/v1/therapists
+Authorization: Bearer {{admin_token}}
+
+### ===============================================
+### 기존 테스트 (아래부터)
+### ===============================================
 
 ### 1. 회원가입 요청 (Register)
 # 설명: 초대코드(ABA2026)를 이용해 치료사 계정을 생성합니다.
