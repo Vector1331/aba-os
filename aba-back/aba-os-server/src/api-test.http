@@ -28,6 +28,68 @@
 # ===============================================
 
 ### ===============================================
+### 대시보드 API 테스트 (THERAPIST, ADMIN)
+### ===============================================
+
+### D-1. Admin 로그인 (대시보드 테스트용)
+POST http://localhost:8080/api/v1/auth/login
+Content-Type: application/json
+
+{
+  "email": "admin@aba.com",
+  "password": "1234"
+}
+> {%
+    client.global.set("dashboard_token", response.body.data.accessToken);
+    client.log("Dashboard Token (Admin) saved!");
+%}
+
+### D-2. 대시보드 요약 조회 (Admin)
+# 메인 화면용 통계 데이터를 조회합니다.
+# - activeCasesCount: 활성 케이스(아동) 수
+# - weeklySessionsCount: 이번 주 세션 수
+# - developmentAgeStats: 연령대별 아동 수
+# - pendingReportsCount: 미작성 리포트 수
+# - recentSessions: 최근 세션 Top 5
+GET http://localhost:8080/api/v1/dashboard/summary
+Authorization: Bearer {{dashboard_token}}
+
+### D-3. Therapist 로그인 (대시보드 테스트용)
+POST http://localhost:8080/api/v1/auth/login
+Content-Type: application/json
+
+{
+  "email": "teacher@aba.com",
+  "password": "1234"
+}
+> {%
+    client.global.set("therapist_dashboard_token", response.body.data.accessToken);
+    client.log("Dashboard Token (Therapist) saved!");
+%}
+
+### D-4. 대시보드 요약 조회 (Therapist)
+# 치료사 권한으로도 대시보드 조회 가능
+GET http://localhost:8080/api/v1/dashboard/summary
+Authorization: Bearer {{therapist_dashboard_token}}
+
+### D-5. Parent 로그인 (권한 테스트용)
+POST http://localhost:8080/api/v1/auth/login
+Content-Type: application/json
+
+{
+  "email": "parent@aba.com",
+  "password": "1234"
+}
+> {%
+    client.global.set("parent_token", response.body.data.accessToken);
+%}
+
+### D-6. 대시보드 요약 조회 (Parent - 403 예상)
+# Parent 권한은 대시보드 접근 불가 - 403 Forbidden 예상
+GET http://localhost:8080/api/v1/dashboard/summary
+Authorization: Bearer {{parent_token}}
+
+### ===============================================
 ### 치료사 관리 API 테스트 (Admin Only)
 ### ===============================================
 

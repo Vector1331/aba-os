@@ -28,4 +28,12 @@ public interface ReportRepository extends JpaRepository<Report, UUID> {
 
     // 아동별 리포트 수 조회
     long countByChildId(UUID childId);
+
+    // Dashboard: 센터별 특정 기간 리포트가 있는 아동 ID 목록 조회
+    @Query("SELECT DISTINCT r.child.id FROM Report r " +
+            "WHERE r.child.center.id = :centerId " +
+            "AND r.periodEnd >= :periodStart")
+    List<UUID> findChildIdsWithReportInPeriod(
+            @Param("centerId") UUID centerId,
+            @Param("periodStart") java.time.LocalDate periodStart);
 }
