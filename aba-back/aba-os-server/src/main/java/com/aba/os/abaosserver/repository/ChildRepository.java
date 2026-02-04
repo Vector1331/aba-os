@@ -30,4 +30,7 @@ public interface ChildRepository extends JpaRepository<Child, UUID> {
 
     // Migration: 이름으로 아동 조회 (목표 연결용)
     java.util.Optional<Child> findByCenter_IdAndName(UUID centerId, String name);
+
+    // Dashboard: 센터별 활성 아동 목록 조회 (연령 계산용)
+    List<Child> findByCenter_IdAndStatus(UUID centerId, String status);
 }

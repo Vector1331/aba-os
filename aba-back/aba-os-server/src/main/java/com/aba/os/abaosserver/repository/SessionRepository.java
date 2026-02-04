@@ -81,4 +81,14 @@ public interface SessionRepository extends JpaRepository<Session, UUID> {
             @Param("endDate") LocalDate endDate);
 
     void deleteAllByChildId(UUID childId);
+
+    // Dashboard: 최근 세션 Top 5 조회 (시행 데이터 포함, 날짜 내림차순)
+    @Query("SELECT DISTINCT s FROM Session s " +
+            "JOIN FETCH s.child c " +
+            "JOIN FETCH s.therapist t " +
+            "JOIN FETCH t.user u " +
+            "LEFT JOIN FETCH s.trials tr " +
+            "WHERE c.center.id = :centerId " +
+            "ORDER BY s.sessionDate DESC, s.createdAt DESC")
+    List<Session> findRecentSessionsWithTrials(@Param("centerId") UUID centerId);
 }
