@@ -20,7 +20,7 @@ import org.springframework.web.multipart.MultipartFile;
 @RestController
 @RequestMapping("/api/v1/migration")
 @RequiredArgsConstructor
-@Tag(name = "6. 마이그레이션 (Migration)", description = "엑셀/이미지 데이터 마이그레이션 API (Admin 전용)")
+@Tag(name = "7. 마이그레이션 (Migration)", description = "엑셀/이미지 데이터 마이그레이션 API (Admin 전용)")
 public class MigrationController {
 
     private final MigrationService migrationService;

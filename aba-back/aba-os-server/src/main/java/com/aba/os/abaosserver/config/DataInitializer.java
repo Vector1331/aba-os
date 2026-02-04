@@ -27,12 +27,24 @@ public class DataInitializer implements CommandLineRunner {
 
     // 고정 UUID (기억하기 쉬운 형식)
     private static final UUID CENTER_ID = UUID.fromString("00000000-0000-0000-0000-000000000001");
-    private static final UUID USER_ID = UUID.fromString("00000000-0000-0000-0000-000000000001");
+
+    // Admin User
+    private static final UUID ADMIN_USER_ID = UUID.fromString("00000000-0000-0000-0000-000000000010");
+    private static final String ADMIN_EMAIL = "admin@aba.com";
+
+    // Therapist User & Therapist
+    private static final UUID THERAPIST_USER_ID = UUID.fromString("00000000-0000-0000-0000-000000000011");
     private static final UUID THERAPIST_ID = UUID.fromString("00000000-0000-0000-0000-000000000001");
+    private static final String THERAPIST_EMAIL = "teacher@aba.com";
+
+    // Parent User
+    private static final UUID PARENT_USER_ID = UUID.fromString("00000000-0000-0000-0000-000000000012");
+    private static final String PARENT_EMAIL = "parent@aba.com";
+
+    // Child
     private static final UUID CHILD_ID = UUID.fromString("00000000-0000-0000-0000-000000000001");
 
-    // 테스트 계정 정보
-    private static final String TEST_EMAIL = "test@aba.com";
+    // 공통 테스트 계정 정보
     private static final String TEST_PASSWORD = "1234";
     private static final String TEST_INVITE_CODE = "TEST1234";
 
@@ -53,15 +65,23 @@ public class DataInitializer implements CommandLineRunner {
             log.info("Test Center already exists. Skipping...");
         }
 
-        // 2. User (Therapist) 생성
-        if (!userRepository.existsById(USER_ID)) {
-            createTestUser();
+        // 2. Admin User 생성
+        if (!userRepository.existsById(ADMIN_USER_ID)) {
+            createAdminUser();
             dataCreated = true;
         } else {
-            log.info("Test User already exists. Skipping...");
+            log.info("Admin User already exists. Skipping...");
         }
 
-        // 3. Therapist 생성
+        // 3. Therapist User 생성
+        if (!userRepository.existsById(THERAPIST_USER_ID)) {
+            createTherapistUser();
+            dataCreated = true;
+        } else {
+            log.info("Therapist User already exists. Skipping...");
+        }
+
+        // 4. Therapist 생성
         if (!therapistRepository.existsById(THERAPIST_ID)) {
             createTestTherapist();
             dataCreated = true;
@@ -69,7 +89,15 @@ public class DataInitializer implements CommandLineRunner {
             log.info("Test Therapist already exists. Skipping...");
         }
 
-        // 4. Child 생성
+        // 5. Parent User 생성
+        if (!userRepository.existsById(PARENT_USER_ID)) {
+            createParentUser();
+            dataCreated = true;
+        } else {
+            log.info("Parent User already exists. Skipping...");
+        }
+
+        // 6. Child 생성
         if (!childRepository.existsById(CHILD_ID)) {
             createTestChild();
             dataCreated = true;
@@ -95,27 +123,45 @@ public class DataInitializer implements CommandLineRunner {
         log.info("Created Test Center: {} (ID: {})", center.getName(), CENTER_ID);
     }
 
-    private void createTestUser() {
+    private void createAdminUser() {
         Center center = centerRepository.findById(CENTER_ID)
                 .orElseThrow(() -> new IllegalStateException("Center must be created first"));
 
         User user = User.builder()
-                .id(USER_ID)
+                .id(ADMIN_USER_ID)
                 .center(center)
-                .email(TEST_EMAIL)
+                .email(ADMIN_EMAIL)
                 .passwordHash(passwordEncoder.encode(TEST_PASSWORD))
-                .name("테스트 치료사")
+                .name("관리자")
+                .role(User.UserRole.ADMIN)
+                .isActiveSubscription(false)
+                .build();
+
+        userRepository.save(user);
+        log.info("Created Admin User: {} (ID: {})", ADMIN_EMAIL, ADMIN_USER_ID);
+    }
+
+    private void createTherapistUser() {
+        Center center = centerRepository.findById(CENTER_ID)
+                .orElseThrow(() -> new IllegalStateException("Center must be created first"));
+
+        User user = User.builder()
+                .id(THERAPIST_USER_ID)
+                .center(center)
+                .email(THERAPIST_EMAIL)
+                .passwordHash(passwordEncoder.encode(TEST_PASSWORD))
+                .name("김치료")
                 .role(User.UserRole.THERAPIST)
                 .isActiveSubscription(false)
                 .build();
 
         userRepository.save(user);
-        log.info("Created Test User: {} (ID: {})", TEST_EMAIL, USER_ID);
+        log.info("Created Therapist User: {} (ID: {})", THERAPIST_EMAIL, THERAPIST_USER_ID);
     }
 
     private void createTestTherapist() {
-        User user = userRepository.findById(USER_ID)
-                .orElseThrow(() -> new IllegalStateException("User must be created first"));
+        User user = userRepository.findById(THERAPIST_USER_ID)
+                .orElseThrow(() -> new IllegalStateException("Therapist User must be created first"));
         Center center = centerRepository.findById(CENTER_ID)
                 .orElseThrow(() -> new IllegalStateException("Center must be created first"));
 
@@ -129,6 +175,24 @@ public class DataInitializer implements CommandLineRunner {
 
         therapistRepository.save(therapist);
         log.info("Created Test Therapist (ID: {})", THERAPIST_ID);
+    }
+
+    private void createParentUser() {
+        Center center = centerRepository.findById(CENTER_ID)
+                .orElseThrow(() -> new IllegalStateException("Center must be created first"));
+
+        User user = User.builder()
+                .id(PARENT_USER_ID)
+                .center(center)
+                .email(PARENT_EMAIL)
+                .passwordHash(passwordEncoder.encode(TEST_PASSWORD))
+                .name("김부모")
+                .role(User.UserRole.PARENT)
+                .isActiveSubscription(true)
+                .build();
+
+        userRepository.save(user);
+        log.info("Created Parent User: {} (ID: {})", PARENT_EMAIL, PARENT_USER_ID);
     }
 
     private void createTestChild() {
@@ -161,21 +225,31 @@ public class DataInitializer implements CommandLineRunner {
         log.info("[Test Data Initialized]");
         log.info("========================================");
         log.info("");
-        log.info("  Therapist Login: {} / {}", TEST_EMAIL, TEST_PASSWORD);
+        log.info("  ** Test Accounts (PW: {}) **", TEST_PASSWORD);
+        log.info("  ----------------------------------------");
+        log.info("  Admin:     {} / {}", ADMIN_EMAIL, TEST_PASSWORD);
+        log.info("  Therapist: {} / {}", THERAPIST_EMAIL, TEST_PASSWORD);
+        log.info("  Parent:    {} / {}", PARENT_EMAIL, TEST_PASSWORD);
+        log.info("  ----------------------------------------");
+        log.info("");
         log.info("  Invite Code: {}", TEST_INVITE_CODE);
         log.info("");
         log.info("  Test IDs (Copy & Paste):");
-        log.info("  - Center ID:    {}", CENTER_ID);
-        log.info("  - User ID:      {}", USER_ID);
-        log.info("  - Therapist ID: {}", THERAPIST_ID);
-        log.info("  - Child ID:     {}", CHILD_ID);
+        log.info("  - Center ID:         {}", CENTER_ID);
+        log.info("  - Admin User ID:     {}", ADMIN_USER_ID);
+        log.info("  - Therapist User ID: {}", THERAPIST_USER_ID);
+        log.info("  - Therapist ID:      {}", THERAPIST_ID);
+        log.info("  - Parent User ID:    {}", PARENT_USER_ID);
+        log.info("  - Child ID:          {}", CHILD_ID);
         log.info("");
-        log.info("  Access Token Curl:");
-        log.info("  curl -X POST http://localhost:8080/api/v1/auth/login \\");
-        log.info("    -H \"Content-Type: application/json\" \\");
-        log.info("    -d '{{\"email\":\"{}\",\"password\":\"{}\"}}'", TEST_EMAIL, TEST_PASSWORD);
+        log.info("  ** Swagger UI 사용법 **");
+        log.info("  1. http://localhost:8080/swagger-ui/index.html 접속");
+        log.info("  2. '0. 인증 (Auth)' > 'POST /auth/login' 실행");
+        log.info("     - Admin 테스트: {\"email\":\"{}\",\"password\":\"{}\"}", ADMIN_EMAIL, TEST_PASSWORD);
+        log.info("  3. 응답의 'accessToken' 복사");
+        log.info("  4. 페이지 상단 'Authorize' 버튼 클릭");
+        log.info("  5. 토큰 붙여넣기 후 Authorize");
         log.info("");
-        log.info("  Swagger UI: http://localhost:8080/swagger-ui/index.html");
         log.info("========================================");
 
         if (!dataCreated) {
