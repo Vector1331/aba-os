@@ -61,6 +61,28 @@ public class TherapistService {
     }
 
     /**
+     * 사용자 ID로 치료사 조회
+     */
+    public TherapistResponse getTherapistByUserId(Long userId) {
+        Long centerId = securityUtil.getCurrentCenterId();
+
+        Therapist therapist = therapistRepository.findByUserId(userId)
+                .orElseThrow(() -> new IllegalArgumentException("해당 사용자의 치료사 정보를 찾을 수 없습니다."));
+
+        // 같은 센터 소속인지 검증
+        if (!therapist.getCenter().getId().equals(centerId)) {
+            throw new IllegalArgumentException("접근 권한이 없습니다.");
+        }
+
+        // 삭제된 치료사인지 확인
+        if (therapist.isDeleted()) {
+            throw new IllegalArgumentException("삭제된 치료사입니다.");
+        }
+
+        return TherapistResponse.from(therapist);
+    }
+
+    /**
      * 치료사 등록
      */
     @Transactional
@@ -105,7 +127,8 @@ public class TherapistService {
     public void updateTherapist(Long therapistId, TherapistUpdateRequest request) {
         Long centerId = securityUtil.getCurrentCenterId();
 
-        Therapist therapist = therapistRepository.findByIdAndDeletedFalse(therapistId)
+        // fetch join으로 연관 엔티티 함께 조회
+        Therapist therapist = therapistRepository.findByIdWithDetailsAndDeletedFalse(therapistId)
                 .orElseThrow(() -> new IllegalArgumentException("치료사를 찾을 수 없습니다."));
 
         // 권한 검증: 같은 센터 소속인지

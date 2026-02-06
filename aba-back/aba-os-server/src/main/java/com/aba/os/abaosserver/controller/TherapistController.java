@@ -40,6 +40,14 @@ public class TherapistController {
         return ResponseEntity.ok(ApiResponse.success(therapist));
     }
 
+    @GetMapping("/by-user/{userId}")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "사용자 ID로 치료사 조회", description = "특정 사용자(User)의 치료사 정보를 조회합니다. (Admin 전용)")
+    public ResponseEntity<ApiResponse<TherapistResponse>> getTherapistByUserId(@PathVariable Long userId) {
+        TherapistResponse therapist = therapistService.getTherapistByUserId(userId);
+        return ResponseEntity.ok(ApiResponse.success(therapist));
+    }
+
     @PostMapping
     @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "치료사 등록", description = "새 치료사를 등록합니다. 먼저 사용자(User)가 생성되어 있어야 합니다. (Admin 전용)")

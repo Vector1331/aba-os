@@ -2,6 +2,8 @@ package com.aba.os.abaosserver.repository;
 
 import com.aba.os.abaosserver.domain.Therapist;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -23,6 +25,10 @@ public interface TherapistRepository extends JpaRepository<Therapist, Long> {
 
     // 삭제되지 않은 치료사 단건 조회
     Optional<Therapist> findByIdAndDeletedFalse(Long id);
+
+    // 삭제되지 않은 치료사 단건 조회 (연관 엔티티 fetch join)
+    @Query("SELECT t FROM Therapist t JOIN FETCH t.user JOIN FETCH t.center WHERE t.id = :id AND t.deleted = false")
+    Optional<Therapist> findByIdWithDetailsAndDeletedFalse(@Param("id") Long id);
 
     // 특정 User가 이미 치료사로 등록되어 있는지 확인
     boolean existsByUserIdAndDeletedFalse(Long userId);
