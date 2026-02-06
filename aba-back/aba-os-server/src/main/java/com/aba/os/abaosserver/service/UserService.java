@@ -10,7 +10,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.UUID;
 
 @Slf4j
 @Service
@@ -25,7 +24,7 @@ public class UserService {
      * 현재 로그인된 사용자 정보 조회
      */
     public UserResponse getCurrentUser() {
-        UUID userId = securityUtil.getCurrentUserId();
+        Long userId = securityUtil.getCurrentUserId();
 
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
@@ -38,7 +37,7 @@ public class UserService {
      */
     @Transactional
     public UserResponse updateCurrentUser(UserUpdateRequest request) {
-        UUID userId = securityUtil.getCurrentUserId();
+        Long userId = securityUtil.getCurrentUserId();
 
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));

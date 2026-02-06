@@ -9,14 +9,13 @@ import lombok.Getter;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.UUID;
 
 @Getter
 @Builder
 public class ReportResponse {
 
-    private UUID id;
-    private UUID childId;
+    private Long id;
+    private Long childId;
     private String childName;
     private String title;
     private LocalDate periodStart;

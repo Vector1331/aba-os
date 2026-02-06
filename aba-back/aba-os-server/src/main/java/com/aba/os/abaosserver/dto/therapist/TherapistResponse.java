@@ -4,14 +4,12 @@ import com.aba.os.abaosserver.domain.Therapist;
 import lombok.Builder;
 import lombok.Getter;
 
-import java.util.UUID;
-
 @Getter
 @Builder
 public class TherapistResponse {
 
-    private UUID id;
-    private UUID userId;
+    private Long id;
+    private Long userId;
     private String name;
     private String email;
     private String specialty;

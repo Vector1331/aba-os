@@ -7,14 +7,13 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
-import java.util.UUID;
 
 @Getter
 @NoArgsConstructor
 public class ReportCreateRequest {
 
     @NotNull(message = "아동 ID는 필수입니다")
-    private UUID childId;
+    private Long childId;
 
     @NotBlank(message = "리포트 제목은 필수입니다")
     private String title;

@@ -6,17 +6,16 @@ import lombok.Builder;
 import lombok.Getter;
 
 import java.time.LocalDateTime;
-import java.util.UUID;
 
 @Getter
 @Builder
 public class UserResponse {
-    private UUID id;
+    private Long id;
     private String email;
     private String name;
     private UserRole role;
     private String centerName;
-    private UUID centerId;
+    private Long centerId;
     private LocalDateTime lastLoginAt;
     private LocalDateTime createdAt;
 

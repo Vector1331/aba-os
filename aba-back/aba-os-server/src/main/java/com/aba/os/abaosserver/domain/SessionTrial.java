@@ -5,8 +5,6 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import java.time.LocalDateTime;
-import java.util.UUID;
 
 @Entity
 @Getter
@@ -17,8 +15,8 @@ import java.util.UUID;
 public class SessionTrial {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
-    private UUID id;
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "session_id", nullable = false)
@@ -37,14 +35,9 @@ public class SessionTrial {
     @Column(nullable = false)
     private Integer successes;
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "prompt_type", nullable = false, length = 20)
-    private PromptType promptType; // [신규] 촉구 유형
+    @Column(name = "prompt_count")
+    private Integer promptCount; // 촉구 횟수
 
     @Column(columnDefinition = "TEXT")
     private String memo; // [신규] 상세 메모
-
-    public enum PromptType {
-        PHYSICAL, VERBAL, VISUAL, GESTURAL, MODELING, POSITIONAL, NONE
-    }
 }

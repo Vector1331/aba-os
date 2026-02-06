@@ -9,17 +9,16 @@ import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
 import java.util.List;
-import java.util.UUID;
 
 @Getter
 @NoArgsConstructor
 public class SessionCreateRequest {
 
     @NotNull(message = "아동 ID는 필수입니다")
-    private UUID childId;
+    private Long childId;
 
     @NotNull(message = "치료사 ID는 필수입니다")
-    private UUID therapistId;
+    private Long therapistId;
 
     @NotNull(message = "세션 날짜는 필수입니다")
     private LocalDate sessionDate;

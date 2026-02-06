@@ -7,7 +7,6 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
-import java.util.UUID;
 
 @Getter
 @NoArgsConstructor
@@ -31,5 +30,5 @@ public class ChildCreateRequest {
     private String requestDetails;
 
     @NotNull(message = "담당 치료사 ID는 필수입니다")
-    private UUID therapistId;
+    private Long therapistId;
 }

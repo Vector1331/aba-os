@@ -16,7 +16,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -32,8 +31,8 @@ public class ChildService {
     private final SessionRepository sessionRepository;
     private final SecurityUtil securityUtil;
 
-    public List<ChildListResponse> getChildren(UUID therapistId) {
-        UUID centerId = securityUtil.getCurrentCenterId();
+    public List<ChildListResponse> getChildren(Long therapistId) {
+        Long centerId = securityUtil.getCurrentCenterId();
 
         List<Child> children = childRepository.findByCenterIdAndOptionalTherapistId(centerId, therapistId);
 
@@ -42,8 +41,8 @@ public class ChildService {
                 .collect(Collectors.toList());
     }
 
-    public ChildDetailResponse getChildDetail(UUID childId) {
-        UUID centerId = securityUtil.getCurrentCenterId();
+    public ChildDetailResponse getChildDetail(Long childId) {
+        Long centerId = securityUtil.getCurrentCenterId();
 
         Child child = childRepository.findById(childId)
                 .orElseThrow(() -> new IllegalArgumentException("아동을 찾을 수 없습니다."));
@@ -64,8 +63,8 @@ public class ChildService {
     }
 
     @Transactional
-    public UUID createChild(ChildCreateRequest request) {
-        UUID centerId = securityUtil.getCurrentCenterId();
+    public Long createChild(ChildCreateRequest request) {
+        Long centerId = securityUtil.getCurrentCenterId();
 
         // 센터 조회
         Center center = centerRepository.findById(centerId)
@@ -100,8 +99,8 @@ public class ChildService {
      * 아동 정보 수정
      */
     @Transactional
-    public void updateChild(UUID childId, ChildUpdateRequest request) {
-        UUID centerId = securityUtil.getCurrentCenterId();
+    public void updateChild(Long childId, ChildUpdateRequest request) {
+        Long centerId = securityUtil.getCurrentCenterId();
 
         Child child = childRepository.findById(childId)
                 .orElseThrow(() -> new IllegalArgumentException("아동을 찾을 수 없습니다."));
@@ -129,8 +128,8 @@ public class ChildService {
      * 아동 삭제 (연관 데이터 Cascade 삭제)
      */
     @Transactional
-    public void deleteChild(UUID childId) {
-        UUID centerId = securityUtil.getCurrentCenterId();
+    public void deleteChild(Long childId) {
+        Long centerId = securityUtil.getCurrentCenterId();
 
         Child child = childRepository.findById(childId)
                 .orElseThrow(() -> new IllegalArgumentException("아동을 찾을 수 없습니다."));

@@ -1,19 +1,16 @@
 package com.aba.os.abaosserver.dto.session;
 
-import com.aba.os.abaosserver.domain.SessionTrial.PromptType;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-
-import java.util.UUID;
 
 @Getter
 @NoArgsConstructor
 public class TrialRequest {
 
     @NotNull(message = "목표 ID는 필수입니다")
-    private UUID goalId;
+    private Long goalId;
 
     private String taskContent; // 과제 내용
 
@@ -25,8 +22,8 @@ public class TrialRequest {
     @Min(value = 0, message = "성공 횟수는 0 이상이어야 합니다")
     private Integer successes;
 
-    @NotNull(message = "촉구 유형은 필수입니다")
-    private PromptType promptType;
+    @Min(value = 0, message = "촉구 횟수는 0 이상이어야 합니다")
+    private Integer promptCount; // 촉구 횟수
 
     private String memo; // 상세 메모
 }

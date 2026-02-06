@@ -9,7 +9,6 @@ import org.springframework.data.domain.Persistable;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.UUID;
 
 @Entity
 @Getter
@@ -17,11 +16,11 @@ import java.util.UUID;
 @AllArgsConstructor
 @Builder
 @Table(name = "children")
-public class Child implements Persistable<UUID> {
+public class Child implements Persistable<Long> {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
-    private UUID id;
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
 
     @Transient
     @Builder.Default

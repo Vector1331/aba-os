@@ -11,7 +11,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.util.List;
-import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -33,8 +32,8 @@ public class SessionService {
      * - Child의 lastSessionDate 업데이트
      */
     @Transactional
-    public UUID createSession(SessionCreateRequest request) {
-        UUID centerId = securityUtil.getCurrentCenterId();
+    public Long createSession(SessionCreateRequest request) {
+        Long centerId = securityUtil.getCurrentCenterId();
 
         // 아동 조회 및 검증
         Child child = childRepository.findById(request.getChildId())
@@ -87,7 +86,7 @@ public class SessionService {
                     .taskContent(trialRequest.getTaskContent())
                     .trials(trialRequest.getTrials())
                     .successes(trialRequest.getSuccesses())
-                    .promptType(trialRequest.getPromptType())
+                    .promptCount(trialRequest.getPromptCount())
                     .memo(trialRequest.getMemo())
                     .build();
 
@@ -104,8 +103,8 @@ public class SessionService {
     /**
      * 세션 목록 조회 (아동 ID로 필터링)
      */
-    public List<SessionResponse> getSessions(UUID childId, LocalDate startDate, LocalDate endDate) {
-        UUID centerId = securityUtil.getCurrentCenterId();
+    public List<SessionResponse> getSessions(Long childId, LocalDate startDate, LocalDate endDate) {
+        Long centerId = securityUtil.getCurrentCenterId();
 
         // 아동 조회 및 검증
         Child child = childRepository.findById(childId)
@@ -126,8 +125,8 @@ public class SessionService {
     /**
      * 세션 상세 조회
      */
-    public SessionDetailResponse getSessionDetail(UUID sessionId) {
-        UUID centerId = securityUtil.getCurrentCenterId();
+    public SessionDetailResponse getSessionDetail(Long sessionId) {
+        Long centerId = securityUtil.getCurrentCenterId();
 
         Session session = sessionRepository.findByIdWithDetails(sessionId)
                 .orElseThrow(() -> new IllegalArgumentException("세션을 찾을 수 없습니다."));
@@ -144,8 +143,8 @@ public class SessionService {
      * 세션 삭제 (연관된 SessionTrial도 함께 삭제)
      */
     @Transactional
-    public void deleteSession(UUID sessionId) {
-        UUID centerId = securityUtil.getCurrentCenterId();
+    public void deleteSession(Long sessionId) {
+        Long centerId = securityUtil.getCurrentCenterId();
 
         Session session = sessionRepository.findById(sessionId)
                 .orElseThrow(() -> new IllegalArgumentException("세션을 찾을 수 없습니다."));

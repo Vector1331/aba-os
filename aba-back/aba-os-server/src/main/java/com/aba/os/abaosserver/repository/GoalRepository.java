@@ -6,16 +6,15 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
-import java.util.UUID;
 
 @Repository
-public interface GoalRepository extends JpaRepository<Goal, UUID> {
+public interface GoalRepository extends JpaRepository<Goal, Long> {
 
-    List<Goal> findByChildId(UUID childId);
+    List<Goal> findByChildId(Long childId);
 
-    List<Goal> findByChildIdAndStatus(UUID childId, GoalStatus status);
+    List<Goal> findByChildIdAndStatus(Long childId, GoalStatus status);
 
-    long countByChildIdAndStatus(UUID childId, GoalStatus status);
+    long countByChildIdAndStatus(Long childId, GoalStatus status);
 
-    void deleteAllByChildId(UUID childId);
+    void deleteAllByChildId(Long childId);
 }

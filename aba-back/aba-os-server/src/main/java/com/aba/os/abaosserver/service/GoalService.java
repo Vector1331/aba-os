@@ -15,7 +15,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -28,8 +27,8 @@ public class GoalService {
     private final ChildRepository childRepository;
     private final SecurityUtil securityUtil;
 
-    public List<GoalResponse> getGoals(UUID childId, GoalStatus status) {
-        UUID centerId = securityUtil.getCurrentCenterId();
+    public List<GoalResponse> getGoals(Long childId, GoalStatus status) {
+        Long centerId = securityUtil.getCurrentCenterId();
 
         // 아동 조회 및 권한 검증
         Child child = childRepository.findById(childId)
@@ -52,8 +51,8 @@ public class GoalService {
     }
 
     @Transactional
-    public UUID createGoal(UUID childId, GoalCreateRequest request) {
-        UUID centerId = securityUtil.getCurrentCenterId();
+    public Long createGoal(Long childId, GoalCreateRequest request) {
+        Long centerId = securityUtil.getCurrentCenterId();
 
         // 아동 조회 및 권한 검증
         Child child = childRepository.findById(childId)
@@ -81,8 +80,8 @@ public class GoalService {
     /**
      * 목표 상세 조회
      */
-    public GoalResponse getGoalDetail(UUID goalId) {
-        UUID centerId = securityUtil.getCurrentCenterId();
+    public GoalResponse getGoalDetail(Long goalId) {
+        Long centerId = securityUtil.getCurrentCenterId();
 
         Goal goal = goalRepository.findById(goalId)
                 .orElseThrow(() -> new IllegalArgumentException("목표를 찾을 수 없습니다."));
@@ -99,8 +98,8 @@ public class GoalService {
      * 목표 정보 수정
      */
     @Transactional
-    public void updateGoal(UUID goalId, GoalUpdateRequest request) {
-        UUID centerId = securityUtil.getCurrentCenterId();
+    public void updateGoal(Long goalId, GoalUpdateRequest request) {
+        Long centerId = securityUtil.getCurrentCenterId();
 
         Goal goal = goalRepository.findById(goalId)
                 .orElseThrow(() -> new IllegalArgumentException("목표를 찾을 수 없습니다."));
@@ -127,8 +126,8 @@ public class GoalService {
      * 목표 삭제
      */
     @Transactional
-    public void deleteGoal(UUID goalId) {
-        UUID centerId = securityUtil.getCurrentCenterId();
+    public void deleteGoal(Long goalId) {
+        Long centerId = securityUtil.getCurrentCenterId();
 
         Goal goal = goalRepository.findById(goalId)
                 .orElseThrow(() -> new IllegalArgumentException("목표를 찾을 수 없습니다."));

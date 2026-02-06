@@ -5,16 +5,15 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
-import java.util.UUID;
 
 @Repository
-public interface SessionTrialRepository extends JpaRepository<SessionTrial, UUID> {
+public interface SessionTrialRepository extends JpaRepository<SessionTrial, Long> {
 
-    List<SessionTrial> findBySessionId(UUID sessionId);
+    List<SessionTrial> findBySessionId(Long sessionId);
 
-    List<SessionTrial> findByGoalId(UUID goalId);
+    List<SessionTrial> findByGoalId(Long goalId);
 
-    long countBySessionId(UUID sessionId);
+    long countBySessionId(Long sessionId);
 
-    void deleteAllBySessionId(UUID sessionId);
+    void deleteAllBySessionId(Long sessionId);
 }

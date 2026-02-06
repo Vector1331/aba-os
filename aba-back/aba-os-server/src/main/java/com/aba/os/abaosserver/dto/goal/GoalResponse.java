@@ -5,14 +5,13 @@ import lombok.Builder;
 import lombok.Getter;
 
 import java.time.LocalDateTime;
-import java.util.UUID;
 
 @Getter
 @Builder
 public class GoalResponse {
 
-    private UUID id;
-    private UUID childId;
+    private Long id;
+    private Long childId;
     private String name;
     private String category;
     private String description;

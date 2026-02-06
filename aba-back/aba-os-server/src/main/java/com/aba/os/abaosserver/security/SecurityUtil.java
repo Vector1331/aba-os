@@ -4,8 +4,6 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 
-import java.util.UUID;
-
 @Component
 public class SecurityUtil {
 
@@ -15,7 +13,7 @@ public class SecurityUtil {
         this.jwtTokenProvider = jwtTokenProvider;
     }
 
-    public UUID getCurrentUserId() {
+    public Long getCurrentUserId() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication != null && authentication.getCredentials() != null) {
             String token = (String) authentication.getCredentials();
@@ -24,12 +22,12 @@ public class SecurityUtil {
         throw new IllegalStateException("인증 정보를 찾을 수 없습니다.");
     }
 
-    public UUID getCurrentCenterId() {
+    public Long getCurrentCenterId() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication != null && authentication.getCredentials() != null) {
             String token = (String) authentication.getCredentials();
-            String centerId = jwtTokenProvider.parseClaims(token).get("centerId", String.class);
-            return UUID.fromString(centerId);
+            Long centerId = jwtTokenProvider.parseClaims(token).get("centerId", Long.class);
+            return centerId;
         }
         throw new IllegalStateException("인증 정보를 찾을 수 없습니다.");
     }

@@ -17,7 +17,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -35,7 +34,7 @@ public class TherapistService {
      * 치료사 목록 조회 (삭제되지 않은 치료사만)
      */
     public List<TherapistListResponse> getTherapists() {
-        UUID centerId = securityUtil.getCurrentCenterId();
+        Long centerId = securityUtil.getCurrentCenterId();
 
         List<Therapist> therapists = therapistRepository.findByCenter_IdAndDeletedFalse(centerId);
 
@@ -47,8 +46,8 @@ public class TherapistService {
     /**
      * 치료사 상세 조회
      */
-    public TherapistResponse getTherapistDetail(UUID therapistId) {
-        UUID centerId = securityUtil.getCurrentCenterId();
+    public TherapistResponse getTherapistDetail(Long therapistId) {
+        Long centerId = securityUtil.getCurrentCenterId();
 
         Therapist therapist = therapistRepository.findByIdAndDeletedFalse(therapistId)
                 .orElseThrow(() -> new IllegalArgumentException("치료사를 찾을 수 없습니다."));
@@ -65,8 +64,8 @@ public class TherapistService {
      * 치료사 등록
      */
     @Transactional
-    public UUID createTherapist(TherapistCreateRequest request) {
-        UUID centerId = securityUtil.getCurrentCenterId();
+    public Long createTherapist(TherapistCreateRequest request) {
+        Long centerId = securityUtil.getCurrentCenterId();
 
         // 센터 조회
         Center center = centerRepository.findById(centerId)
@@ -103,8 +102,8 @@ public class TherapistService {
      * 치료사 정보 수정
      */
     @Transactional
-    public void updateTherapist(UUID therapistId, TherapistUpdateRequest request) {
-        UUID centerId = securityUtil.getCurrentCenterId();
+    public void updateTherapist(Long therapistId, TherapistUpdateRequest request) {
+        Long centerId = securityUtil.getCurrentCenterId();
 
         Therapist therapist = therapistRepository.findByIdAndDeletedFalse(therapistId)
                 .orElseThrow(() -> new IllegalArgumentException("치료사를 찾을 수 없습니다."));
@@ -122,8 +121,8 @@ public class TherapistService {
      * 치료사 삭제 (Soft Delete)
      */
     @Transactional
-    public void deleteTherapist(UUID therapistId) {
-        UUID centerId = securityUtil.getCurrentCenterId();
+    public void deleteTherapist(Long therapistId) {
+        Long centerId = securityUtil.getCurrentCenterId();
 
         Therapist therapist = therapistRepository.findByIdAndDeletedFalse(therapistId)
                 .orElseThrow(() -> new IllegalArgumentException("치료사를 찾을 수 없습니다."));

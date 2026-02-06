@@ -21,7 +21,9 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
@@ -47,7 +49,7 @@ public class ReportService {
      */
     @Transactional
     public ReportResponse createReport(ReportCreateRequest request) {
-        UUID centerId = securityUtil.getCurrentCenterId();
+        Long centerId = securityUtil.getCurrentCenterId();
         ReportType reportType = request.getReportType() != null
                 ? request.getReportType()
                 : ReportType.PARENT_SUMMARY;
@@ -122,8 +124,8 @@ public class ReportService {
     /**
      * 아동별 리포트 목록 조회
      */
-    public List<ReportListResponse> getReports(UUID childId) {
-        UUID centerId = securityUtil.getCurrentCenterId();
+    public List<ReportListResponse> getReports(Long childId) {
+        Long centerId = securityUtil.getCurrentCenterId();
 
         Child child = childRepository.findById(childId)
                 .orElseThrow(() -> new IllegalArgumentException("아동을 찾을 수 없습니다."));
@@ -142,8 +144,8 @@ public class ReportService {
     /**
      * 리포트 상세 조회
      */
-    public ReportResponse getReportDetail(UUID reportId) {
-        UUID centerId = securityUtil.getCurrentCenterId();
+    public ReportResponse getReportDetail(Long reportId) {
+        Long centerId = securityUtil.getCurrentCenterId();
 
         Report report = reportRepository.findByIdWithChild(reportId)
                 .orElseThrow(() -> new IllegalArgumentException("리포트를 찾을 수 없습니다."));
@@ -160,8 +162,8 @@ public class ReportService {
      * - 같은 센터 소속의 Admin/Therapist만 삭제 가능
      */
     @Transactional
-    public void deleteReport(UUID reportId) {
-        UUID centerId = securityUtil.getCurrentCenterId();
+    public void deleteReport(Long reportId) {
+        Long centerId = securityUtil.getCurrentCenterId();
 
         Report report = reportRepository.findByIdWithChild(reportId)
                 .orElseThrow(() -> new IllegalArgumentException("리포트를 찾을 수 없습니다."));
@@ -203,7 +205,7 @@ public class ReportService {
     /**
      * 목표별 상세 통계 계산
      */
-    private List<GoalDetail> calculateGoalDetails(UUID childId, List<Session> sessions) {
+    private List<GoalDetail> calculateGoalDetails(Long childId, List<Session> sessions) {
         // 아동의 모든 목표 조회
         List<Goal> goals = goalRepository.findByChildId(childId);
         if (goals.isEmpty()) {
@@ -211,7 +213,7 @@ public class ReportService {
         }
 
         // 목표별 시행 데이터 집계
-        Map<UUID, GoalStats> goalStatsMap = new HashMap<>();
+        Map<Long, GoalStats> goalStatsMap = new HashMap<>();
         for (Goal goal : goals) {
             goalStatsMap.put(goal.getId(), new GoalStats(goal));
         }
@@ -219,7 +221,7 @@ public class ReportService {
         // 세션 시행 데이터 집계
         for (Session session : sessions) {
             for (SessionTrial trial : session.getTrials()) {
-                UUID goalId = trial.getGoal().getId();
+                Long goalId = trial.getGoal().getId();
                 GoalStats stats = goalStatsMap.get(goalId);
                 if (stats != null) {
                     stats.addTrial(trial);
@@ -381,7 +383,7 @@ public class ReportService {
         private final Goal goal;
         private int totalTrials = 0;
         private int totalSuccesses = 0;
-        private final Map<SessionTrial.PromptType, Integer> promptCounts = new HashMap<>();
+        private int totalPromptCount = 0;
 
         GoalStats(Goal goal) {
             this.goal = goal;
@@ -390,7 +392,9 @@ public class ReportService {
         void addTrial(SessionTrial trial) {
             totalTrials += trial.getTrials();
             totalSuccesses += trial.getSuccesses();
-            promptCounts.merge(trial.getPromptType(), trial.getTrials(), Integer::sum);
+            if (trial.getPromptCount() != null) {
+                totalPromptCount += trial.getPromptCount();
+            }
         }
 
         GoalDetail toGoalDetail() {
@@ -401,12 +405,6 @@ public class ReportService {
                         .divide(BigDecimal.valueOf(totalTrials), 2, RoundingMode.HALF_UP);
             }
 
-            // 가장 많이 사용된 촉구 타입
-            String primaryPromptType = promptCounts.entrySet().stream()
-                    .max(Map.Entry.comparingByValue())
-                    .map(e -> e.getKey().name())
-                    .orElse("NONE");
-
             return GoalDetail.builder()
                     .goalName(goal.getName())
                     .category(goal.getCategory().name())
@@ -414,7 +412,7 @@ public class ReportService {
                     .actualSuccessRate(actualSuccessRate)
                     .totalTrials(totalTrials)
                     .totalSuccesses(totalSuccesses)
-                    .primaryPromptType(primaryPromptType)
+                    .primaryPromptType(String.valueOf(totalPromptCount))
                     .build();
         }
     }

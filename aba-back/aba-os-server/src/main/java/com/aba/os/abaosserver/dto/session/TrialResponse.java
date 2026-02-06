@@ -1,24 +1,21 @@
 package com.aba.os.abaosserver.dto.session;
 
 import com.aba.os.abaosserver.domain.SessionTrial;
-import com.aba.os.abaosserver.domain.SessionTrial.PromptType;
 import lombok.Builder;
 import lombok.Getter;
-
-import java.util.UUID;
 
 @Getter
 @Builder
 public class TrialResponse {
 
-    private UUID id;
-    private UUID goalId;
+    private Long id;
+    private Long goalId;
     private String goalName;
     private String taskContent;
     private Integer trials;
     private Integer successes;
     private Double successRate;
-    private PromptType promptType;
+    private Integer promptCount; // 촉구 횟수
     private String memo;
 
     public static TrialResponse from(SessionTrial trial) {
@@ -34,7 +31,7 @@ public class TrialResponse {
                 .trials(trial.getTrials())
                 .successes(trial.getSuccesses())
                 .successRate(rate)
-                .promptType(trial.getPromptType())
+                .promptCount(trial.getPromptCount())
                 .memo(trial.getMemo())
                 .build();
     }

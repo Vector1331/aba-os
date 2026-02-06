@@ -20,7 +20,9 @@ import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.Period;
 import java.time.temporal.TemporalAdjusters;
-import java.util.*;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -41,7 +43,7 @@ public class DashboardService {
      * 대시보드 요약 정보 조회
      */
     public DashboardSummaryResponse getDashboardSummary() {
-        UUID centerId = securityUtil.getCurrentCenterId();
+        Long centerId = securityUtil.getCurrentCenterId();
         LocalDate today = LocalDate.now();
 
         // 1. 활성 케이스 수 (활성 아동 수)
@@ -81,7 +83,7 @@ public class DashboardService {
     /**
      * 발달 연령 현황 계산 (연령대별 아동 수)
      */
-    private Map<String, Long> calculateDevelopmentAgeStats(UUID centerId, LocalDate today) {
+    private Map<String, Long> calculateDevelopmentAgeStats(Long centerId, LocalDate today) {
         List<Child> activeChildren = childRepository.findByCenter_IdAndStatus(centerId, ACTIVE_STATUS);
 
         // 연령대별 카운트 초기화 (순서 유지를 위해 LinkedHashMap 사용)
@@ -129,13 +131,13 @@ public class DashboardService {
      * 미작성 리포트 수 계산
      * 활성 아동 중 최근 30일 이내에 리포트가 없는 아동 수
      */
-    private long calculatePendingReportsCount(UUID centerId, LocalDate today) {
+    private long calculatePendingReportsCount(Long centerId, LocalDate today) {
         // 활성 아동 수
         long activeChildrenCount = childRepository.countByCenter_IdAndStatus(centerId, ACTIVE_STATUS);
 
         // 최근 30일 이내 리포트가 있는 아동 ID 목록
         LocalDate periodStart = today.minusDays(30);
-        List<UUID> childIdsWithReport = reportRepository.findChildIdsWithReportInPeriod(centerId, periodStart);
+        List<Long> childIdsWithReport = reportRepository.findChildIdsWithReportInPeriod(centerId, periodStart);
 
         // 활성 아동 중 리포트가 없는 아동 수
         return activeChildrenCount - childIdsWithReport.size();
@@ -144,7 +146,7 @@ public class DashboardService {
     /**
      * 최근 세션 Top 5 조회 (성공률 포함)
      */
-    private List<RecentSessionDto> getRecentSessions(UUID centerId) {
+    private List<RecentSessionDto> getRecentSessions(Long centerId) {
         List<Session> sessions = sessionRepository.findRecentSessionsWithTrials(centerId);
 
         return sessions.stream()
@@ -191,7 +193,7 @@ public class DashboardService {
     /**
      * 이번 달 누적 세션 수 계산 (하위 호환성용)
      */
-    private long calculateMonthlySessionCount(UUID centerId, LocalDate today) {
+    private long calculateMonthlySessionCount(Long centerId, LocalDate today) {
         LocalDate monthStart = today.withDayOfMonth(1);
         LocalDate monthEnd = today.withDayOfMonth(today.lengthOfMonth());
         return sessionRepository.countByChild_Center_IdAndSessionDateBetween(centerId, monthStart, monthEnd);

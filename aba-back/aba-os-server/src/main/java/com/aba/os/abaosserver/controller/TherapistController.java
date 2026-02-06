@@ -15,7 +15,6 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/v1/therapists")
@@ -36,7 +35,7 @@ public class TherapistController {
     @GetMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "치료사 상세 조회", description = "치료사의 상세 정보를 조회합니다. (Admin 전용)")
-    public ResponseEntity<ApiResponse<TherapistResponse>> getTherapistDetail(@PathVariable UUID id) {
+    public ResponseEntity<ApiResponse<TherapistResponse>> getTherapistDetail(@PathVariable Long id) {
         TherapistResponse therapist = therapistService.getTherapistDetail(id);
         return ResponseEntity.ok(ApiResponse.success(therapist));
     }
@@ -44,8 +43,8 @@ public class TherapistController {
     @PostMapping
     @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "치료사 등록", description = "새 치료사를 등록합니다. 먼저 사용자(User)가 생성되어 있어야 합니다. (Admin 전용)")
-    public ResponseEntity<ApiResponse<UUID>> createTherapist(@Valid @RequestBody TherapistCreateRequest request) {
-        UUID therapistId = therapistService.createTherapist(request);
+    public ResponseEntity<ApiResponse<Long>> createTherapist(@Valid @RequestBody TherapistCreateRequest request) {
+        Long therapistId = therapistService.createTherapist(request);
         return ResponseEntity.ok(ApiResponse.success(therapistId));
     }
 
@@ -53,7 +52,7 @@ public class TherapistController {
     @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "치료사 정보 수정", description = "치료사의 전문분야, 경력 등을 수정합니다. (Admin 전용)")
     public ResponseEntity<ApiResponse<String>> updateTherapist(
-            @PathVariable UUID id,
+            @PathVariable Long id,
             @Valid @RequestBody TherapistUpdateRequest request) {
         therapistService.updateTherapist(id, request);
         return ResponseEntity.ok(ApiResponse.success("치료사 정보가 수정되었습니다."));
@@ -62,7 +61,7 @@ public class TherapistController {
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "치료사 삭제", description = "치료사를 삭제합니다. (Soft Delete - 데이터는 보존됨) (Admin 전용)")
-    public ResponseEntity<ApiResponse<String>> deleteTherapist(@PathVariable UUID id) {
+    public ResponseEntity<ApiResponse<String>> deleteTherapist(@PathVariable Long id) {
         therapistService.deleteTherapist(id);
         return ResponseEntity.ok(ApiResponse.success("치료사가 삭제되었습니다."));
     }

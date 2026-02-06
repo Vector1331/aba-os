@@ -7,17 +7,16 @@ import lombok.Getter;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Getter
 @Builder
 public class SessionDetailResponse {
 
-    private UUID id;
-    private UUID childId;
+    private Long id;
+    private Long childId;
     private String childName;
-    private UUID therapistId;
+    private Long therapistId;
     private String therapistName;
     private LocalDate sessionDate;
     private Integer duration;

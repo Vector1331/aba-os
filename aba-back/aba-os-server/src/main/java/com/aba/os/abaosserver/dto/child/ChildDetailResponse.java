@@ -5,7 +5,6 @@ import lombok.Builder;
 import lombok.Getter;
 
 import java.time.LocalDate;
-import java.util.UUID;
 
 @Getter
 @Builder
@@ -17,7 +16,7 @@ public class ChildDetailResponse {
     @Getter
     @Builder
     public static class ChildInfo {
-        private UUID id;
+        private Long id;
         private String name;
         private LocalDate birthDate;
         private String gender;

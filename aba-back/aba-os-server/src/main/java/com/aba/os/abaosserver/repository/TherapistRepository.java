@@ -6,25 +6,24 @@ import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 
 @Repository
-public interface TherapistRepository extends JpaRepository<Therapist, UUID> {
+public interface TherapistRepository extends JpaRepository<Therapist, Long> {
 
-    Optional<Therapist> findByUserId(UUID userId);
+    Optional<Therapist> findByUserId(Long userId);
 
     // Migration: 센터별 치료사 목록 조회
-    List<Therapist> findByCenter_Id(UUID centerId);
+    List<Therapist> findByCenter_Id(Long centerId);
 
     // Migration: 센터의 첫 번째 치료사 조회 (기본 담당자용)
-    Optional<Therapist> findFirstByCenter_Id(UUID centerId);
+    Optional<Therapist> findFirstByCenter_Id(Long centerId);
 
     // 센터별 삭제되지 않은 치료사 목록 조회
-    List<Therapist> findByCenter_IdAndDeletedFalse(UUID centerId);
+    List<Therapist> findByCenter_IdAndDeletedFalse(Long centerId);
 
     // 삭제되지 않은 치료사 단건 조회
-    Optional<Therapist> findByIdAndDeletedFalse(UUID id);
+    Optional<Therapist> findByIdAndDeletedFalse(Long id);
 
     // 특정 User가 이미 치료사로 등록되어 있는지 확인
-    boolean existsByUserIdAndDeletedFalse(UUID userId);
+    boolean existsByUserIdAndDeletedFalse(Long userId);
 }

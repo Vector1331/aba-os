@@ -15,7 +15,6 @@ import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
 import java.util.List;
-import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/v1/sessions")
@@ -27,16 +26,16 @@ public class SessionController {
 
     @PostMapping
     @Operation(summary = "세션 생성", description = "새로운 치료 세션과 시행 기록을 생성합니다.")
-    public ResponseEntity<ApiResponse<UUID>> createSession(
+    public ResponseEntity<ApiResponse<Long>> createSession(
             @Valid @RequestBody SessionCreateRequest request) {
-        UUID sessionId = sessionService.createSession(request);
+        Long sessionId = sessionService.createSession(request);
         return ResponseEntity.ok(ApiResponse.success(sessionId));
     }
 
     @GetMapping
     @Operation(summary = "세션 목록 조회", description = "아동별 세션 목록을 조회합니다. 날짜 범위로 필터링 가능")
     public ResponseEntity<ApiResponse<List<SessionResponse>>> getSessions(
-            @RequestParam UUID childId,
+            @RequestParam Long childId,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
         List<SessionResponse> sessions = sessionService.getSessions(childId, startDate, endDate);
@@ -45,14 +44,14 @@ public class SessionController {
 
     @GetMapping("/{id}")
     @Operation(summary = "세션 상세 조회", description = "세션의 상세 정보와 시행 기록을 조회합니다.")
-    public ResponseEntity<ApiResponse<SessionDetailResponse>> getSessionDetail(@PathVariable UUID id) {
+    public ResponseEntity<ApiResponse<SessionDetailResponse>> getSessionDetail(@PathVariable Long id) {
         SessionDetailResponse session = sessionService.getSessionDetail(id);
         return ResponseEntity.ok(ApiResponse.success(session));
     }
 
     @DeleteMapping("/{id}")
     @Operation(summary = "세션 삭제", description = "세션과 연관된 시행 기록을 함께 삭제합니다.")
-    public ResponseEntity<ApiResponse<String>> deleteSession(@PathVariable UUID id) {
+    public ResponseEntity<ApiResponse<String>> deleteSession(@PathVariable Long id) {
         sessionService.deleteSession(id);
         return ResponseEntity.ok(ApiResponse.success("세션이 삭제되었습니다."));
     }

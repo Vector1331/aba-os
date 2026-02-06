@@ -6,7 +6,6 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import java.util.List;
-import java.util.UUID;
 
 /**
  * 이미지 마이그레이션 결과 응답 DTO
@@ -21,7 +20,7 @@ public class ImageMigrationResponse {
     private String message;
 
     // 처리 결과
-    private UUID childId;
+    private Long childId;
     private String childName;
     private int goalsCreated;
 
@@ -31,7 +30,7 @@ public class ImageMigrationResponse {
     // 오류 목록
     private List<String> errors;
 
-    public static ImageMigrationResponse success(UUID childId, String childName, int goalsCreated, ExtractedChildData extractedData) {
+    public static ImageMigrationResponse success(Long childId, String childName, int goalsCreated, ExtractedChildData extractedData) {
         return ImageMigrationResponse.builder()
                 .success(true)
                 .message(String.format("이미지에서 아동 '%s' 정보와 %d개의 목표를 성공적으로 추출하여 저장했습니다.",
@@ -51,7 +50,7 @@ public class ImageMigrationResponse {
                 .build();
     }
 
-    public static ImageMigrationResponse partialSuccess(UUID childId, String childName,
+    public static ImageMigrationResponse partialSuccess(Long childId, String childName,
                                                          int goalsCreated, List<String> errors,
                                                          ExtractedChildData extractedData) {
         return ImageMigrationResponse.builder()

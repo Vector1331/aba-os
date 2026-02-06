@@ -27,7 +27,13 @@ import java.io.InputStream;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Base64;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 
 @Slf4j
 @Service
@@ -54,7 +60,7 @@ public class MigrationService {
      */
     @Transactional
     public MigrationResponse uploadExcel(MultipartFile file) {
-        UUID centerId = securityUtil.getCurrentCenterId();
+        Long centerId = securityUtil.getCurrentCenterId();
 
         // 파일 검증
         if (file.isEmpty()) {
@@ -187,7 +193,7 @@ public class MigrationService {
     /**
      * Goals 시트 처리
      */
-    private Map<String, Integer> processGoalsSheet(Sheet sheet, UUID centerId, List<String> errors) {
+    private Map<String, Integer> processGoalsSheet(Sheet sheet, Long centerId, List<String> errors) {
         int success = 0;
         int failure = 0;
 
@@ -313,7 +319,7 @@ public class MigrationService {
      */
     @Transactional
     public ImageMigrationResponse migrateFromImage(MultipartFile file) {
-        UUID centerId = securityUtil.getCurrentCenterId();
+        Long centerId = securityUtil.getCurrentCenterId();
         List<String> errors = new ArrayList<>();
 
         // 1. 파일 검증
