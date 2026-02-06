@@ -2,6 +2,7 @@ package com.aba.os.abaosserver.service;
 
 import com.aba.os.abaosserver.domain.*;
 import com.aba.os.abaosserver.domain.Report.ReportType;
+import com.aba.os.abaosserver.dto.report.AiReportContent;
 import com.aba.os.abaosserver.dto.report.ReportCreateRequest;
 import com.aba.os.abaosserver.dto.report.ReportListResponse;
 import com.aba.os.abaosserver.dto.report.ReportResponse;
@@ -11,7 +12,10 @@ import com.aba.os.abaosserver.repository.ReportRepository;
 import com.aba.os.abaosserver.repository.SessionRepository;
 import com.aba.os.abaosserver.security.SecurityUtil;
 import com.aba.os.abaosserver.service.OpenAiService.GoalDetail;
-import com.aba.os.abaosserver.service.OpenAiService.ParentReportContext;
+import com.aba.os.abaosserver.service.OpenAiService.SessionScore;
+import com.aba.os.abaosserver.service.OpenAiService.StructuredReportContext;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -21,9 +25,7 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -38,6 +40,7 @@ public class ReportService {
     private final GoalRepository goalRepository;
     private final SecurityUtil securityUtil;
     private final OpenAiService openAiService;
+    private final ObjectMapper objectMapper;
 
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd");
 
@@ -98,7 +101,8 @@ public class ReportService {
                 request.getPeriodEnd(),
                 stats,
                 goalDetails,
-                combinedNotes
+                combinedNotes,
+                sessions  // 세션 목록 전달 (차트 데이터용)
         );
 
         // Report 엔티티 생성 및 저장
@@ -247,33 +251,86 @@ public class ReportService {
             LocalDate periodEnd,
             StatisticsResult stats,
             List<GoalDetail> goalDetails,
-            String sessionNotes
+            String sessionNotes,
+            List<Session> sessions  // 세션 목록 추가
     ) {
-        // 통계 요약 (모든 타입 공통)
-        String statisticsComment = generateStatisticsComment(
-                periodStart, periodEnd, stats, child.getName(), goalDetails
-        );
-
-        // PARENT_SUMMARY인 경우에만 AI 생성
+        // PARENT_SUMMARY인 경우 구조화된 JSON 리포트 생성
         if (reportType == ReportType.PARENT_SUMMARY) {
-            log.info("PARENT_SUMMARY 타입 - AI 리포트 생성 시작");
+            log.info("PARENT_SUMMARY 타입 - 구조화된 AI 리포트 생성 시작");
 
-            ParentReportContext context = ParentReportContext.builder()
+            // 날짜별 세션 점수 계산 (최근 10개)
+            List<SessionScore> sessionScores = calculateSessionScores(sessions);
+
+            StructuredReportContext context = StructuredReportContext.builder()
                     .childName(child.getName())
+                    .periodStart(periodStart)
+                    .periodEnd(periodEnd)
                     .totalSessions(stats.totalSessions)
                     .totalTrials(stats.totalTrials)
                     .totalSuccesses(stats.totalSuccesses)
                     .averageAccuracy(stats.averageAccuracy)
                     .sessionNotes(sessionNotes)
                     .goalDetails(goalDetails)
+                    .sessionScores(sessionScores)
                     .build();
 
-            String aiComment = openAiService.generateParentSummary(context);
-            return statisticsComment + "\n\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n[AI 생성 상담 일지]\n\n" + aiComment;
+            AiReportContent aiContent = openAiService.generateStructuredReport(context);
+
+            // JSON으로 직렬화하여 content에 저장
+            try {
+                return objectMapper.writeValueAsString(aiContent);
+            } catch (JsonProcessingException e) {
+                log.error("AI 리포트 JSON 직렬화 실패", e);
+                // 폴백: 통계 코멘트만 반환
+                return generateStatisticsComment(periodStart, periodEnd, stats, child.getName(), goalDetails);
+            }
         }
 
         // 다른 타입은 통계만 반환
-        return statisticsComment;
+        return generateStatisticsComment(periodStart, periodEnd, stats, child.getName(), goalDetails);
+    }
+
+    /**
+     * 날짜별 세션 평균 점수 계산 (차트용)
+     * 최근 10개 세션까지만 반환
+     */
+    private List<SessionScore> calculateSessionScores(List<Session> sessions) {
+        if (sessions == null || sessions.isEmpty()) {
+            return List.of();
+        }
+
+        // 날짜별 시행/성공 집계
+        Map<LocalDate, int[]> dateStats = new TreeMap<>(); // TreeMap으로 날짜순 정렬
+
+        for (Session session : sessions) {
+            LocalDate date = session.getSessionDate();
+            int[] stats = dateStats.computeIfAbsent(date, k -> new int[2]); // [trials, successes]
+
+            for (SessionTrial trial : session.getTrials()) {
+                stats[0] += trial.getTrials();
+                stats[1] += trial.getSuccesses();
+            }
+        }
+
+        // SessionScore 리스트 생성 (최근 10개)
+        return dateStats.entrySet().stream()
+                .map(entry -> {
+                    int trials = entry.getValue()[0];
+                    int successes = entry.getValue()[1];
+                    BigDecimal score = trials > 0
+                            ? BigDecimal.valueOf(successes)
+                                .multiply(BigDecimal.valueOf(100))
+                                .divide(BigDecimal.valueOf(trials), 1, RoundingMode.HALF_UP)
+                            : BigDecimal.ZERO;
+
+                    return SessionScore.builder()
+                            .date(entry.getKey())
+                            .score(score)
+                            .build();
+                })
+                .sorted(Comparator.comparing(SessionScore::getDate))
+                .limit(10)
+                .toList();
     }
 
     /**

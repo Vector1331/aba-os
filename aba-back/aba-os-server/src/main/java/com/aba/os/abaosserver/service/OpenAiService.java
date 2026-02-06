@@ -1,6 +1,7 @@
 package com.aba.os.abaosserver.service;
 
 import com.aba.os.abaosserver.dto.migration.ExtractedChildData;
+import com.aba.os.abaosserver.dto.report.AiReportContent;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -15,6 +16,7 @@ import org.springframework.web.reactive.function.client.WebClientResponseExcepti
 
 import java.math.BigDecimal;
 import java.time.Duration;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 
@@ -304,6 +306,266 @@ public class OpenAiService {
         private int totalTrials;
         private int totalSuccesses;
         private String primaryPromptType;
+    }
+
+    // ==================== 구조화된 JSON 리포트 생성 (고도화) ====================
+
+    /**
+     * 구조화된 JSON 형식의 AI 리포트 생성
+     * - 프론트엔드에서 차트를 그릴 수 있는 데이터 포함
+     * - summary, strength_weakness, recommendation, chart_data 구조
+     */
+    public AiReportContent generateStructuredReport(StructuredReportContext context) {
+        if (!isApiKeyConfigured()) {
+            log.info("OpenAI API 키가 설정되지 않았습니다. 더미 데이터를 사용합니다.");
+            return generateDummyStructuredReport(context);
+        }
+
+        try {
+            String systemPrompt = buildStructuredReportSystemPrompt();
+            String userPrompt = buildStructuredReportUserPrompt(context);
+            String jsonResponse = callOpenAiApiWithJsonFormat(systemPrompt, userPrompt);
+            return parseStructuredReportResponse(jsonResponse, context);
+        } catch (Exception e) {
+            log.warn("OpenAI API 호출 실패. 더미 데이터를 사용합니다. 원인: {}", e.getMessage());
+            return generateDummyStructuredReport(context);
+        }
+    }
+
+    /**
+     * JSON 포맷 응답을 강제하는 OpenAI API 호출
+     */
+    private String callOpenAiApiWithJsonFormat(String systemPrompt, String userPrompt) {
+        log.debug("OpenAI API 호출 (JSON 포맷) - 모델: {}", model);
+
+        Map<String, Object> requestBody = Map.of(
+                "model", model,
+                "messages", List.of(
+                        Map.of("role", "system", "content", systemPrompt),
+                        Map.of("role", "user", "content", userPrompt)
+                ),
+                "max_tokens", maxTokens,
+                "temperature", 0.7,
+                "response_format", Map.of("type", "json_object")  // JSON 응답 강제
+        );
+
+        try {
+            Map<String, Object> response = webClient.post()
+                    .header(HttpHeaders.AUTHORIZATION, "Bearer " + apiKey)
+                    .bodyValue(requestBody)
+                    .retrieve()
+                    .bodyToMono(Map.class)
+                    .timeout(TIMEOUT)
+                    .block();
+
+            if (response != null && response.containsKey("choices")) {
+                List<Map<String, Object>> choices = (List<Map<String, Object>>) response.get("choices");
+                if (!choices.isEmpty()) {
+                    Map<String, Object> message = (Map<String, Object>) choices.get(0).get("message");
+                    String content = (String) message.get("content");
+                    log.info("OpenAI API JSON 응답 성공 ({}자)", content.length());
+                    log.debug("AI JSON 응답: {}", content);
+                    return content;
+                }
+            }
+
+            throw new RuntimeException("OpenAI API 응답 파싱 실패");
+
+        } catch (WebClientResponseException e) {
+            log.error("OpenAI API 오류: {} - {}", e.getStatusCode(), e.getResponseBodyAsString());
+            throw new RuntimeException("OpenAI API 호출 실패: " + e.getMessage());
+        }
+    }
+
+    /**
+     * 구조화된 리포트 시스템 프롬프트
+     */
+    private String buildStructuredReportSystemPrompt() {
+        return """
+                You are an expert ABA (Applied Behavior Analysis) therapist and report writer for children with developmental disabilities.
+
+                Your task is to analyze therapy session data and generate a structured JSON report for parents.
+
+                CRITICAL REQUIREMENTS:
+                1. You MUST respond ONLY with valid JSON - no markdown, no explanations
+                2. Use warm, encouraging, and professional Korean language
+                3. Avoid jargon - explain technical terms simply
+                4. Focus on positive progress while honestly addressing areas for improvement
+
+                RESPONSE FORMAT (strict JSON):
+                {
+                  "summary": "전반적인 아동의 발달 상태 및 세션 수행 요약 (3~4문장, 한국어)",
+                  "strength_weakness": "주요 강점과 보완이 필요한 부분 분석 (한국어)",
+                  "recommendation": "가정 연계 활동 및 다음 치료 방향 제안 (구체적인 활동 1~2개 포함, 한국어)",
+                  "chart_data": [
+                    {"date": "YYYY-MM-DD", "score": 수행정확도숫자}
+                  ]
+                }
+
+                IMPORTANT:
+                - chart_data must contain the EXACT session data provided by the user (do not modify dates or scores)
+                - summary should be 3-4 sentences highlighting overall progress
+                - strength_weakness should identify 1-2 strengths and 1-2 areas for improvement
+                - recommendation should suggest specific home activities parents can do
+                """;
+    }
+
+    /**
+     * 구조화된 리포트 사용자 프롬프트 생성
+     */
+    private String buildStructuredReportUserPrompt(StructuredReportContext ctx) {
+        StringBuilder sb = new StringBuilder();
+
+        sb.append("## 아동 정보\n");
+        sb.append(String.format("- 이름: %s\n", ctx.getChildName()));
+        sb.append(String.format("- 리포트 기간: %s ~ %s\n\n", ctx.getPeriodStart(), ctx.getPeriodEnd()));
+
+        sb.append("## 기간 내 전체 통계\n");
+        sb.append(String.format("- 총 세션 수: %d회\n", ctx.getTotalSessions()));
+        sb.append(String.format("- 총 시행 횟수: %d회\n", ctx.getTotalTrials()));
+        sb.append(String.format("- 총 성공 횟수: %d회\n", ctx.getTotalSuccesses()));
+        sb.append(String.format("- 전체 평균 정반응률: %s%%\n\n",
+                ctx.getAverageAccuracy() != null ? ctx.getAverageAccuracy().toPlainString() : "N/A"));
+
+        // 날짜별 세션 데이터 (차트용)
+        sb.append("## 날짜별 세션 수행 데이터 (최근 10개)\n");
+        sb.append("이 데이터를 chart_data 필드에 그대로 포함해주세요:\n");
+        if (ctx.getSessionScores() != null && !ctx.getSessionScores().isEmpty()) {
+            for (SessionScore score : ctx.getSessionScores()) {
+                sb.append(String.format("- %s: %s%%\n", score.getDate(), score.getScore().toPlainString()));
+            }
+        } else {
+            sb.append("- 세션 데이터 없음\n");
+        }
+        sb.append("\n");
+
+        // 목표별 상세 정보
+        if (ctx.getGoalDetails() != null && !ctx.getGoalDetails().isEmpty()) {
+            sb.append("## 목표별 달성 현황\n");
+            for (GoalDetail goal : ctx.getGoalDetails()) {
+                sb.append(String.format("### %s (%s)\n", goal.getGoalName(), goal.getCategory()));
+                sb.append(String.format("- 목표 성공률: %d%%\n", goal.getTargetSuccessRate()));
+                sb.append(String.format("- 실제 달성률: %s%%\n",
+                        goal.getActualSuccessRate() != null ? goal.getActualSuccessRate().toPlainString() : "N/A"));
+                sb.append(String.format("- 시행 횟수: %d회, 성공: %d회\n\n",
+                        goal.getTotalTrials(), goal.getTotalSuccesses()));
+            }
+        }
+
+        // 세션 노트
+        if (StringUtils.hasText(ctx.getSessionNotes())) {
+            sb.append("## 치료사 노트\n");
+            sb.append(ctx.getSessionNotes());
+            sb.append("\n\n");
+        }
+
+        sb.append("""
+                ## 요청사항
+                위 데이터를 바탕으로 부모님께 드릴 구조화된 리포트를 JSON 형식으로 작성해주세요.
+                - summary: 따뜻한 인사와 함께 전체적인 발전 상황 요약 (3~4문장)
+                - strength_weakness: 아이의 강점과 개선이 필요한 부분 분석
+                - recommendation: 가정에서 할 수 있는 구체적인 연습 활동 1~2개 제안
+                - chart_data: 위에서 제공한 날짜별 수행 데이터를 그대로 포함
+                """);
+
+        return sb.toString();
+    }
+
+    /**
+     * AI JSON 응답 파싱
+     */
+    private AiReportContent parseStructuredReportResponse(String jsonResponse, StructuredReportContext context) {
+        try {
+            AiReportContent parsed = objectMapper.readValue(jsonResponse, AiReportContent.class);
+
+            // chart_data가 비어있거나 null이면 원본 데이터로 채움
+            if (parsed.getChartData() == null || parsed.getChartData().isEmpty()) {
+                log.warn("AI 응답에 chart_data가 없습니다. 원본 세션 데이터로 대체합니다.");
+                List<AiReportContent.ChartDataPoint> chartData = context.getSessionScores().stream()
+                        .map(s -> AiReportContent.ChartDataPoint.builder()
+                                .date(s.getDate().toString())
+                                .score(s.getScore())
+                                .build())
+                        .toList();
+
+                return AiReportContent.builder()
+                        .summary(parsed.getSummary())
+                        .strengthWeakness(parsed.getStrengthWeakness())
+                        .recommendation(parsed.getRecommendation())
+                        .chartData(chartData)
+                        .build();
+            }
+
+            return parsed;
+        } catch (JsonProcessingException e) {
+            log.error("AI JSON 응답 파싱 실패: {}", jsonResponse);
+            throw new RuntimeException("AI 응답 JSON 파싱 실패: " + e.getMessage(), e);
+        }
+    }
+
+    /**
+     * 더미 구조화된 리포트 생성 (API 키 미설정 시)
+     */
+    private AiReportContent generateDummyStructuredReport(StructuredReportContext ctx) {
+        String accuracyStr = ctx.getAverageAccuracy() != null
+                ? ctx.getAverageAccuracy().toPlainString()
+                : "N/A";
+
+        // 차트 데이터 생성
+        List<AiReportContent.ChartDataPoint> chartData = List.of();
+        if (ctx.getSessionScores() != null && !ctx.getSessionScores().isEmpty()) {
+            chartData = ctx.getSessionScores().stream()
+                    .map(s -> AiReportContent.ChartDataPoint.builder()
+                            .date(s.getDate().toString())
+                            .score(s.getScore())
+                            .build())
+                    .toList();
+        }
+
+        return AiReportContent.builder()
+                .summary(String.format(
+                        "안녕하세요, %s 아동의 치료 상담 일지입니다. " +
+                        "이번 기간 동안 %s 아동은 총 %d회의 세션에 참여하였으며, 평균 정반응률 %s%%를 보여주었습니다. " +
+                        "전반적으로 꾸준한 발전을 보이고 있으며, 특히 촉구에 대한 반응이 좋아지고 있습니다.",
+                        ctx.getChildName(), ctx.getChildName(), ctx.getTotalSessions(), accuracyStr))
+                .strengthWeakness(
+                        "강점: 언어적 촉구에 대한 반응이 빠르고, 치료사와의 라포가 잘 형성되어 있습니다. " +
+                        "보완점: 새로운 환경이나 과제에 대한 적응 시간이 필요하며, 독립적 수행 비율을 높이는 것이 목표입니다.")
+                .recommendation(
+                        "가정에서는 다음 활동을 추천드립니다: " +
+                        "1) 식사 시간에 '눈 맞추고 인사하기' 연습 - 밥 먹기 전 눈을 맞추고 '잘 먹겠습니다'라고 말하면 칭찬해주세요. " +
+                        "2) 간단한 심부름 놀이 - '휴지 가져와' 같은 한 단계 지시를 주고, 성공하면 하이파이브로 칭찬해주세요. " +
+                        "※ 이 내용은 AI API 키가 설정되지 않아 생성된 예시 텍스트입니다.")
+                .chartData(chartData)
+                .build();
+    }
+
+    /**
+     * 구조화된 리포트 생성을 위한 컨텍스트 DTO
+     */
+    @lombok.Builder
+    @lombok.Getter
+    public static class StructuredReportContext {
+        private String childName;
+        private LocalDate periodStart;
+        private LocalDate periodEnd;
+        private int totalSessions;
+        private int totalTrials;
+        private int totalSuccesses;
+        private BigDecimal averageAccuracy;
+        private String sessionNotes;
+        private List<GoalDetail> goalDetails;
+        private List<SessionScore> sessionScores;  // 날짜별 세션 점수 (차트용)
+    }
+
+    /**
+     * 날짜별 세션 점수 DTO
+     */
+    @lombok.Builder
+    @lombok.Getter
+    public static class SessionScore {
+        private LocalDate date;
+        private BigDecimal score;  // 해당 날짜의 평균 수행 정확도 (%)
     }
 
     // ==================== Vision API 관련 메서드 ====================
