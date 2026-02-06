@@ -42,8 +42,10 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiResponse<Void>> handleException(Exception e) {
         log.error("Unexpected error: ", e);
+        // 개발 환경에서 디버깅을 위해 실제 오류 메시지 포함
+        String errorMessage = "서버 오류가 발생했습니다: " + e.getClass().getSimpleName() + " - " + e.getMessage();
         return ResponseEntity
                 .status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(ApiResponse.error("SERVER_001", "서버 오류가 발생했습니다."));
+                .body(ApiResponse.error("SERVER_001", errorMessage));
     }
 }
