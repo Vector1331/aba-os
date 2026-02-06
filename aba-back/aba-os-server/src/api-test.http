@@ -10,405 +10,337 @@
 #
 # ===============================================
 #
-# ** 테스트 계정 (서버 실행 시 자동 생성) **
+# ** 처음 테스트하는 경우 **
 # ----------------------------------------
-# Admin:     admin@aba.com / 1234
-# Therapist: teacher@aba.com / 1234
-# Parent:    parent@aba.com / 1234
-# ----------------------------------------
+# 이 파일의 요청을 순서대로 실행하면 테스트 데이터가 자동 생성됩니다.
+# 1번부터 순서대로 실행하세요!
 #
-# ** 테스트 ID (고정) **
-# Center ID:         00000000-0000-0000-0000-000000000001
-# Admin User ID:     00000000-0000-0000-0000-000000000010
-# Therapist User ID: 00000000-0000-0000-0000-000000000011
-# Therapist ID:      00000000-0000-0000-0000-000000000001
-# Parent User ID:    00000000-0000-0000-0000-000000000012
-# Child ID:          00000000-0000-0000-0000-000000000001
+# ** 테스트 계정 정보 **
+# ----------------------------------------
+# Admin:     admin@gmail.com / admin1234
+# Therapist: therapist@gmail.com / therapist1234
+# Invite Code: ABA2026
+# ----------------------------------------
 #
 # ===============================================
 
 ### ===============================================
-### 대시보드 API 테스트 (THERAPIST, ADMIN)
+### [PART 1] 메인 서비스 플로우 테스트
+### 순서대로 실행하세요!
 ### ===============================================
 
-### D-1. Admin 로그인 (대시보드 테스트용)
-POST http://localhost:8080/api/v1/auth/login
+### -----------------------------------------------
+### STEP 1: Admin 계정 생성 (회원가입)
+### -----------------------------------------------
+### 1-1. Admin 회원가입
+# 센터장(Admin) 계정을 생성합니다.
+# inviteCode는 센터 가입 시 필요한 초대 코드입니다.
+POST http://localhost:8080/api/v1/auth/register
 Content-Type: application/json
 
 {
-  "email": "admin@aba.com",
-  "password": "1234"
+  "email": "admin@gmail.com",
+  "password": "admin1234",
+  "name": "센터장",
+  "role": "ADMIN",
+  "inviteCode": "ABA2026"
 }
-> {%
-    client.global.set("dashboard_token", response.body.data.accessToken);
-    client.log("Dashboard Token (Admin) saved!");
-%}
 
-### D-2. 대시보드 요약 조회 (Admin)
-# 메인 화면용 통계 데이터를 조회합니다.
-# - activeCasesCount: 활성 케이스(아동) 수
-# - weeklySessionsCount: 이번 주 세션 수
-# - developmentAgeStats: 연령대별 아동 수
-# - pendingReportsCount: 미작성 리포트 수
-# - recentSessions: 최근 세션 Top 5
-GET http://localhost:8080/api/v1/dashboard/summary
-Authorization: Bearer {{dashboard_token}}
-
-### D-3. Therapist 로그인 (대시보드 테스트용)
+### 1-2. Admin 로그인
+# Admin 계정으로 로그인하여 JWT 토큰을 발급받습니다.
+# 이후 모든 Admin 전용 API에서 이 토큰을 사용합니다.
 POST http://localhost:8080/api/v1/auth/login
 Content-Type: application/json
 
 {
-  "email": "teacher@aba.com",
-  "password": "1234"
-}
-> {%
-    client.global.set("therapist_dashboard_token", response.body.data.accessToken);
-    client.log("Dashboard Token (Therapist) saved!");
-%}
-
-### D-4. 대시보드 요약 조회 (Therapist)
-# 치료사 권한으로도 대시보드 조회 가능
-GET http://localhost:8080/api/v1/dashboard/summary
-Authorization: Bearer {{therapist_dashboard_token}}
-
-### D-5. Parent 로그인 (권한 테스트용)
-POST http://localhost:8080/api/v1/auth/login
-Content-Type: application/json
-
-{
-  "email": "parent@aba.com",
-  "password": "1234"
-}
-> {%
-    client.global.set("parent_token", response.body.data.accessToken);
-%}
-
-### D-6. 대시보드 요약 조회 (Parent - 403 예상)
-# Parent 권한은 대시보드 접근 불가 - 403 Forbidden 예상
-GET http://localhost:8080/api/v1/dashboard/summary
-Authorization: Bearer {{parent_token}}
-
-### ===============================================
-### 치료사 관리 API 테스트 (Admin Only)
-### ===============================================
-
-### T-1. Admin 로그인 (토큰 획득용)
-# 치료사 관리 API는 Admin 권한이 필요합니다.
-POST http://localhost:8080/api/v1/auth/login
-Content-Type: application/json
-
-{
-  "email": "admin@aba.com",
-  "password": "1234"
+  "email": "admin@gmail.com",
+  "password": "admin1234"
 }
 > {%
     client.global.set("admin_token", response.body.data.accessToken);
     client.log("Admin Token saved!");
 %}
 
-### T-2. 치료사 목록 조회 (Get Therapist List)
-# 센터에 소속된 모든 치료사 목록을 조회합니다.
-GET http://localhost:8080/api/v1/therapists
-Authorization: Bearer {{admin_token}}
-
-### T-3. 치료사 상세 조회 (Get Therapist Detail)
-# 특정 치료사의 상세 정보를 조회합니다.
-GET http://localhost:8080/api/v1/therapists/00000000-0000-0000-0000-000000000001
-Authorization: Bearer {{admin_token}}
-
-### T-4. 새 사용자 회원가입 (치료사 등록 준비)
-# 치료사를 등록하려면 먼저 User가 필요합니다.
+### -----------------------------------------------
+### STEP 2: 치료사 등록
+### -----------------------------------------------
+### 2-1. 치료사 사용자 회원가입
+# 치료사로 등록할 사용자 계정을 먼저 생성합니다.
 POST http://localhost:8080/api/v1/auth/register
 Content-Type: application/json
 
 {
-  "email": "newtherapist@aba.com",
-  "password": "1234",
-  "name": "박치료",
-  "role": "THERAPIST",
-  "inviteCode": "TEST1234"
-}
-
-### T-5. 새로 가입한 사용자로 로그인 (User ID 확인용)
-POST http://localhost:8080/api/v1/auth/login
-Content-Type: application/json
-
-{
-  "email": "newtherapist@aba.com",
-  "password": "1234"
-}
-> {%
-    // 새 사용자의 정보를 확인하려면 /users/me 호출 필요
-    client.global.set("new_therapist_token", response.body.data.accessToken);
-%}
-
-### T-5-1. 새 사용자 정보 조회 (User ID 획득)
-GET http://localhost:8080/api/v1/users/me
-Authorization: Bearer {{new_therapist_token}}
-
-> {%
-    // 응답에서 userId를 저장 (수동으로 복사해서 T-6에 사용)
-    client.log("New User ID: " + response.body.data.id);
-%}
-
-### T-6. 치료사 등록 (Create Therapist)
-# 위에서 생성한 사용자를 치료사로 등록합니다.
-# ⚠️ 주의: userId에 T-5-1에서 얻은 사용자 ID를 넣으세요.
-POST http://localhost:8080/api/v1/therapists
-Content-Type: application/json
-Authorization: Bearer {{admin_token}}
-
-{
-  "userId": "여기에_T-5-1에서_얻은_userId_입력",
-  "specialty": "언어치료",
-  "experienceYears": 5
-}
-> {%
-    client.global.set("new_therapist_id", response.body.data);
-    client.log("New Therapist ID: " + response.body.data);
-%}
-
-### T-7. 치료사 정보 수정 (Update Therapist)
-# 치료사의 전문분야, 경력 등을 수정합니다.
-PUT http://localhost:8080/api/v1/therapists/{{new_therapist_id}}
-Content-Type: application/json
-Authorization: Bearer {{admin_token}}
-
-{
-  "specialty": "ABA 및 언어치료",
-  "experienceYears": 6
-}
-
-### T-8. 수정된 치료사 상세 조회
-GET http://localhost:8080/api/v1/therapists/{{new_therapist_id}}
-Authorization: Bearer {{admin_token}}
-
-### T-9. 치료사 삭제 (Delete Therapist - Soft Delete)
-# ⚠️ 주의: 실행하면 치료사가 삭제(비활성화)됩니다.
-DELETE http://localhost:8080/api/v1/therapists/{{new_therapist_id}}
-Authorization: Bearer {{admin_token}}
-
-### T-10. 삭제 후 치료사 목록 조회 (삭제된 치료사 미포함 확인)
-GET http://localhost:8080/api/v1/therapists
-Authorization: Bearer {{admin_token}}
-
-### ===============================================
-### 기존 테스트 (아래부터)
-### ===============================================
-
-### 1. 회원가입 요청 (Register)
-# 설명: 초대코드(ABA2026)를 이용해 치료사 계정을 생성합니다.
-POST http://localhost:8080/api/v1/auth/register
-Content-Type: application/json
-
-{
-  "email": "therapist@test.com",
-  "password": "password123!",
+  "email": "therapist@gmail.com",
+  "password": "therapist1234",
   "name": "김치료",
   "role": "THERAPIST",
   "inviteCode": "ABA2026"
 }
 
-### 2. 로그인 요청 (Login)
-# 설명: 위에서 만든 계정으로 로그인하여 JWT 토큰을 받습니다.
+### 2-2. 치료사 사용자 로그인 (User ID 확인용)
+# 치료사 계정으로 로그인합니다.
 POST http://localhost:8080/api/v1/auth/login
 Content-Type: application/json
 
 {
-  "email": "therapist@test.com",
-  "password": "password123!"
-}
-
-### 3. 관리자 회원가입 (Admin Register)
-# 설명: role을 'ADMIN'으로 설정하여 관리자 계정을 생성합니다.
-POST http://localhost:8080/api/v1/auth/register
-Content-Type: application/json
-
-{
-  "email": "admin@aba.com",
-  "password": "admin1234!",
-  "name": "관리자",
-  "role": "ADMIN",
-  "inviteCode": "ABA2026"
-}
-
-### 4. 관리자 로그인 (Admin Login)
-# 설명: 관리자 토큰을 발급받습니다. (아동 등록 시 필요)&& 응답에서 accessToken을 꺼내서 'auth_token'이라는 변수에 저장
-POST http://localhost:8080/api/v1/auth/login
-Content-Type: application/json
-
-{
-  "email": "admin@aba.com",
-  "password": "admin1234!"
+  "email": "therapist@gmail.com",
+  "password": "therapist1234"
 }
 > {%
-    client.global.set("auth_token", response.body.data.accessToken);
+    client.global.set("therapist_token", response.body.data.accessToken);
+    client.log("Therapist Token saved!");
 %}
 
-### 5. 아동 등록 (Create Child) - Admin Only
-# ⚠️ 주의: Header에 '관리자 accessToekn 토큰'을 넣어야 합니다.
-# ⚠️ 주의: "therapistId"에 위에서 조회한 UUID를 꼭 넣으세요!
+### 2-3. 치료사 사용자 정보 조회 (User ID 획득)
+# 치료사 등록 시 필요한 userId를 확인합니다.
+GET http://localhost:8080/api/v1/users/me
+Authorization: Bearer {{therapist_token}}
+
+> {%
+    client.global.set("therapist_user_id", response.body.data.id);
+    client.log("Therapist User ID saved: " + response.body.data.id);
+%}
+
+### 2-4. 치료사 등록 (Admin 권한 필요)
+# Admin이 위에서 생성한 사용자를 치료사로 등록합니다.
+POST http://localhost:8080/api/v1/therapists
+Content-Type: application/json
+Authorization: Bearer {{admin_token}}
+
+{
+  "userId": {{therapist_user_id}},
+  "specialty": "ABA 치료",
+  "experienceYears": 3
+}
+> {%
+    client.global.set("therapist_id", response.body.data);
+    client.log("Therapist ID saved: " + response.body.data);
+%}
+
+### 2-5. 치료사 목록 조회 (확인용)
+GET http://localhost:8080/api/v1/therapists
+Authorization: Bearer {{admin_token}}
+
+### -----------------------------------------------
+### STEP 3: 아동 등록 (Admin 권한)
+### -----------------------------------------------
+### 3-1. 아동 등록
+# Admin이 치료 대상 아동을 등록합니다.
 POST http://localhost:8080/api/v1/children
 Content-Type: application/json
-Authorization: Bearer {{auth_token}}
+Authorization: Bearer {{admin_token}}
 
 {
-  "name": "김영희",
-  "birthDate": "2020-05-05",
-  "gender": "FEMALE",
+  "name": "김철수",
+  "birthDate": "2020-03-15",
+  "gender": "MALE",
   "diagnosis": "자폐 스펙트럼 장애 (ASD)",
-  "currentDevLevel": "눈 맞춤이 어렵고 발화가 제한적임",
-  "parentCharacteristics": "가정 연계 치료에 적극적임",
-  "requestDetails": "이름 호명 반응 개선 희망",
-  "therapistId": "3391df24-f382-4736-95b7-74f2ba73b09b"
+  "currentDevLevel": "언어 발달 지연, 눈 맞춤 어려움",
+  "parentCharacteristics": "적극적인 가정 연계 치료 희망",
+  "requestDetails": "눈 맞춤 및 호명 반응 개선",
+  "therapistId": {{therapist_id}}
 }
+> {%
+    client.global.set("child_id", response.body.data);
+    client.log("Child ID saved: " + response.body.data);
+%}
 
-### 6. 치료사 로그인 (Therapist Login)
-# 설명: 다시 치료사로 로그인해서 내 담당 아동을 조회합니다.
+### -----------------------------------------------
+### STEP 4: 치료사 로그인 및 아동 조회
+### -----------------------------------------------
+### 4-1. 치료사 로그인 (토큰 갱신)
 POST http://localhost:8080/api/v1/auth/login
 Content-Type: application/json
 
 {
-  "email": "therapist@test.com",
-  "password": "password123!"
+  "email": "therapist@gmail.com",
+  "password": "therapist1234"
 }
 > {%
-    client.global.set("auth_token", response.body.data.accessToken);
+    client.global.set("therapist_token", response.body.data.accessToken);
+    client.log("Therapist Token refreshed!");
 %}
 
-### 7. 아동 목록 조회 (List Children)
-# 설명: 치료사가 담당하는 아동 목록을 가져옵니다.
+### 4-2. 아동 목록 조회 (치료사)
+# 치료사가 담당하는 아동 목록을 조회합니다.
 GET http://localhost:8080/api/v1/children
-Authorization: Bearer {{auth_token}}
+Authorization: Bearer {{therapist_token}}
 
 > {%
-    client.global.set("child_id", response.body.data[0].id);
-    client.log("Child ID saved: " + client.global.get("child_id"));
+    if (response.body.data && response.body.data.length > 0) {
+        client.global.set("child_id", response.body.data[0].id);
+        client.log("Child ID from list: " + response.body.data[0].id);
+    }
 %}
 
-### 8. 목표 생성 (Create Goal)
-# ⚠️ 주의: URL의 {childId} 자리에 위 목록 조회에서 나온 아동 ID를 넣으세요.
+### 4-3. 아동 상세 조회
+GET http://localhost:8080/api/v1/children/{{child_id}}
+Authorization: Bearer {{therapist_token}}
+
+### -----------------------------------------------
+### STEP 5: 목표 생성 및 조회
+### -----------------------------------------------
+### 5-1. 목표 생성
+# 아동에 대한 치료 목표를 생성합니다.
 POST http://localhost:8080/api/v1/children/{{child_id}}/goals
 Content-Type: application/json
-Authorization: Bearer {{auth_token}}
+Authorization: Bearer {{therapist_token}}
 
 {
-  "name": "5분간 한 가지 일에 집중 ",
+  "name": "이름 부르면 눈 맞추기",
   "category": "SOCIAL",
-  "description": "치료사가 떨어져 있어도 5분간 한 가지 일에 집중",
-  "targetSuccessRate": 60,
-  "consecutiveDays": 5,
-  "promptPlan": "언어적 촉구(Verbal) -> 제스처(Gestural) -> 소거"
+  "description": "이름을 부르면 3초 이내에 눈을 맞추는 행동 형성",
+  "targetSuccessRate": 80,
+  "consecutiveDays": 3,
+  "promptPlan": "신체적 촉구 -> 제스처 촉구 -> 언어적 촉구 -> 독립 수행"
 }
-
-### 9. 목표 목록 조회 (List Goals)
-GET http://localhost:8080/api/v1/children/{{child_id}}/goals
-Authorization: Bearer {{auth_token}}
-
 > {%
-    // 첫 번째 목표의 ID를 'goal_id' 변수에 저장.
-    client.global.set("goal_id", response.body.data[0].id);
-    client.log("Goal ID saved: " + client.global.get("goal_id"));
+    client.global.set("goal_id", response.body.data);
+    client.log("Goal ID saved: " + response.body.data);
 %}
 
-### 10.세션 생성(Create Session)
+### 5-2. 목표 목록 조회
+GET http://localhost:8080/api/v1/children/{{child_id}}/goals
+Authorization: Bearer {{therapist_token}}
+
+> {%
+    if (response.body.data && response.body.data.length > 0) {
+        client.global.set("goal_id", response.body.data[0].id);
+        client.log("Goal ID from list: " + response.body.data[0].id);
+    }
+%}
+
+### 5-3. 목표 상세 조회
+GET http://localhost:8080/api/v1/goals/{{goal_id}}
+Authorization: Bearer {{therapist_token}}
+
+### -----------------------------------------------
+### STEP 6: 세션 생성 및 조회
+### -----------------------------------------------
+### 6-1. 세션 생성 (시행 기록 포함)
+# 치료 세션과 시행(Trial) 기록을 함께 생성합니다.
 POST http://localhost:8080/api/v1/sessions
 Content-Type: application/json
-Authorization: Bearer {{auth_token}}
+Authorization: Bearer {{therapist_token}}
 
 {
-  "childId": "{{child_id}}",
-  "therapistId": "3391df24-f382-4736-95b7-74f2ba73b09b",
-  "sessionDate": "2026-02-01",
+  "childId": {{child_id}},
+  "therapistId": {{therapist_id}},
+  "sessionDate": "2026-02-07",
   "duration": 50,
-  "notes": "두번째 세션 진행. 아이의 컨디션이 그닥 좋지않음.",
+  "notes": "첫 번째 세션. 아동 컨디션 양호.",
   "trials": [
     {
-      "goalId": "{{goal_id}}",
-      "trials": 12,
-      "successes": 8,
-      "promptType": "VERBAL"
-    },
-    {
-      "goalId": "{{goal_id}}",
-      "trials": 14,
-      "successes": 5,
-      "promptType": "NONE"
+      "goalId": {{goal_id}},
+      "taskContent": "이름 부르고 눈 맞춤 유도",
+      "trials": 10,
+      "successes": 6,
+      "promptCount": 3,
+      "memo": "언어적 촉구에 반응 좋음"
     }
   ]
 }
-
 > {%
     client.global.set("session_id", response.body.data);
     client.log("Session ID saved: " + response.body.data);
 %}
 
-### 11. 세션 목록 조회 (Get Session List)
-GET http://localhost:8080/api/v1/sessions?childId={{child_id}}
-Authorization: Bearer {{auth_token}}
-
-### 12. 세션 상세 조회 (Get Session Detail)
-GET http://localhost:8080/api/v1/sessions/{{session_id}}
-Authorization: Bearer {{auth_token}}
-
-### 13. 리포트 생성 - AI 부모용 요약 (Create Report - PARENT_SUMMARY)
-# reportType: PARENT_SUMMARY (AI 생성), STATISTICS_ONLY (통계만)
-# AI API 키가 없으면 더미 데이터가 생성됩니다.
-POST http://localhost:8080/api/v1/reports
+### 6-2. 추가 세션 생성 (리포트 테스트용)
+POST http://localhost:8080/api/v1/sessions
 Content-Type: application/json
-Authorization: Bearer {{auth_token}}
+Authorization: Bearer {{therapist_token}}
 
 {
-  "childId": "{{child_id}}",
-  "title": "2026년 2월 발달 리포트 (AI)",
+  "childId": {{child_id}},
+  "therapistId": {{therapist_id}},
+  "sessionDate": "2026-02-05",
+  "duration": 50,
+  "notes": "두 번째 세션. 눈 맞춤 개선 보임.",
+  "trials": [
+    {
+      "goalId": {{goal_id}},
+      "taskContent": "이름 부르고 눈 맞춤 유도",
+      "trials": 12,
+      "successes": 9,
+      "promptCount": 2,
+      "memo": "제스처 촉구로 전환 시도"
+    }
+  ]
+}
+
+### 6-3. 세션 목록 조회
+GET http://localhost:8080/api/v1/sessions?childId={{child_id}}
+Authorization: Bearer {{therapist_token}}
+
+### 6-4. 세션 상세 조회
+GET http://localhost:8080/api/v1/sessions/{{session_id}}
+Authorization: Bearer {{therapist_token}}
+
+### -----------------------------------------------
+### STEP 7: 리포트 생성 (두 가지 버전)
+### -----------------------------------------------
+### 7-1. AI 리포트 생성 (PARENT_SUMMARY)
+# OpenAI API 키가 설정되어 있으면 AI가 부모님께 드릴 총평을 작성합니다.
+# API 키가 없으면 더미 텍스트가 생성됩니다.
+POST http://localhost:8080/api/v1/reports
+Content-Type: application/json
+Authorization: Bearer {{therapist_token}}
+
+{
+  "childId": {{child_id}},
+  "title": "2026년 2월 발달 리포트 (AI 버전)",
   "periodStart": "2026-02-01",
   "periodEnd": "2026-02-28",
   "reportType": "PARENT_SUMMARY"
 }
-
 > {%
-    // 생성된 리포트 ID를 저장합니다.
     client.global.set("report_id", response.body.data.id);
     client.log("Report ID saved: " + response.body.data.id);
 %}
 
-### 13-1. 리포트 생성 - 통계만 (Create Report - STATISTICS_ONLY)
-# AI 없이 통계 데이터만 생성
+### 7-2. 통계 리포트 생성 (STATISTICS_ONLY)
+# AI 없이 통계 데이터만 생성합니다.
 POST http://localhost:8080/api/v1/reports
 Content-Type: application/json
-Authorization: Bearer {{auth_token}}
+Authorization: Bearer {{therapist_token}}
 
 {
-  "childId": "{{child_id}}",
+  "childId": {{child_id}},
   "title": "2026년 2월 통계 리포트",
   "periodStart": "2026-02-01",
   "periodEnd": "2026-02-28",
   "reportType": "STATISTICS_ONLY"
 }
 
-### 14. 리포트 목록 조회 (Get Report List)
+### 7-3. 리포트 목록 조회
 GET http://localhost:8080/api/v1/reports?childId={{child_id}}
-Authorization: Bearer {{auth_token}}
+Authorization: Bearer {{therapist_token}}
 
-### 15. 리포트 상세 조회 (Get Report Detail)
-# 통계(총 세션, 시도, 정확도)와 content(AI 템플릿 문구)를 확인하세요.
+### 7-4. 리포트 상세 조회
 GET http://localhost:8080/api/v1/reports/{{report_id}}
-Authorization: Bearer {{auth_token}}
+Authorization: Bearer {{therapist_token}}
 
-### 16. 대시보드 요약 조회 (Dashboard Summary)
-# 센터별 활성 아동 수, 오늘/이번 달 세션 수, 예정 세션 목록을 조회합니다.
+### -----------------------------------------------
+### STEP 8: 대시보드 조회
+### -----------------------------------------------
+### 8-1. 대시보드 요약 조회 (Admin)
+# 센터별 활성 아동 수, 세션 수, 예정 세션 목록 등을 조회합니다.
 GET http://localhost:8080/api/v1/dashboard/summary
-Authorization: Bearer {{auth_token}}
+Authorization: Bearer {{admin_token}}
 
-### 17. 엑셀 데이터 마이그레이션 (Excel Upload) - Admin Only
-# 테스트 엑셀 데이터
-#    - Sheet 1 (Children): Name, BirthDate(yyyy-MM-dd), Gender(M/F), Diagnosis
-#    - Sheet 2 (Goals): ChildName, GoalContent, Category
+### 8-2. 대시보드 요약 조회 (Therapist)
+GET http://localhost:8080/api/v1/dashboard/summary
+Authorization: Bearer {{therapist_token}}
 
+### -----------------------------------------------
+### STEP 9: 엑셀 마이그레이션
+### -----------------------------------------------
+### 9-1. 기본 엑셀 마이그레이션 (Children + Goals)
+# Sheet 1: Children (Name, BirthDate, Gender, Diagnosis)
+# Sheet 2: Goals (ChildName, GoalContent, Category)
 POST http://localhost:8080/api/v1/migration/upload
 Content-Type: multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW
-Authorization: Bearer {{auth_token}}
+Authorization: Bearer {{admin_token}}
 
 ------WebKitFormBoundary7MA4YWxkTrZu0gW
 Content-Disposition: form-data; name="file"; filename="migration_data.xlsx"
@@ -417,16 +349,253 @@ Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet
 < ./test-data/migration_data.xlsx
 ------WebKitFormBoundary7MA4YWxkTrZu0gW--
 
-### 18. 이미지 기반 데이터 마이그레이션 (Vision AI) - Admin Only
-# 수기 기록지 이미지를 업로드하면 Vision AI가 아동 정보와 치료 목표를 자동으로 추출합니다.
-# No-Storage Strategy: 이미지는 서버에 저장되지 않고 메모리에서 처리 후 즉시 삭제됩니다.
-# 지원 형식: JPEG, PNG, WebP, GIF (최대 20MB)
-# OPENAI_API_KEY 환경변수가 설정되어 있거나 설정파일에 저장되어 있어야 합니다.
+### 9-2. DIA 템플릿 엑셀 마이그레이션
+# DIA 템플릿 형식의 세션/시행 기록 마이그레이션
+# V3: 아동명, V4: 날짜, C열: 과제내용, H~Q열: 시행 마커(+/-/p)
+POST http://localhost:8080/api/v1/migration/dia
+Content-Type: multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW
+Authorization: Bearer {{admin_token}}
 
-### 18-1. 이미지 마이그레이션 테스트 1 (예시 이미지 1)
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="file"; filename="excel_migration_sample_DIA.xlsx"
+Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet
+
+< ./test-data/excel_migration_sample_DIA.xlsx
+------WebKitFormBoundary7MA4YWxkTrZu0gW--
+
+
+### ===============================================
+### [PART 2] 기타 기능 테스트
+### ===============================================
+
+### -----------------------------------------------
+### 사용자 관리 API
+### -----------------------------------------------
+### U-1. 내 정보 조회
+GET http://localhost:8080/api/v1/users/me
+Authorization: Bearer {{therapist_token}}
+
+### U-2. 내 정보 수정
+PUT http://localhost:8080/api/v1/users/me
+Content-Type: application/json
+Authorization: Bearer {{therapist_token}}
+
+{
+  "name": "김치료(수정됨)"
+}
+
+### -----------------------------------------------
+### 치료사 관리 API (Admin Only)
+### -----------------------------------------------
+### T-1. 치료사 목록 조회
+GET http://localhost:8080/api/v1/therapists
+Authorization: Bearer {{admin_token}}
+
+### T-2. 치료사 상세 조회
+GET http://localhost:8080/api/v1/therapists/{{therapist_id}}
+Authorization: Bearer {{admin_token}}
+
+### T-3. 치료사 정보 수정
+PUT http://localhost:8080/api/v1/therapists/{{therapist_id}}
+Content-Type: application/json
+Authorization: Bearer {{admin_token}}
+
+{
+  "specialty": "ABA 및 언어치료",
+  "experienceYears": 5
+}
+
+### T-4. 추가 치료사 등록용 사용자 생성
+POST http://localhost:8080/api/v1/auth/register
+Content-Type: application/json
+
+{
+  "email": "therapist2@gmail.com",
+  "password": "therapist1234",
+  "name": "박치료",
+  "role": "THERAPIST",
+  "inviteCode": "ABA2026"
+}
+
+### T-5. 새 치료사 로그인 (User ID 확인)
+POST http://localhost:8080/api/v1/auth/login
+Content-Type: application/json
+
+{
+  "email": "therapist2@gmail.com",
+  "password": "therapist1234"
+}
+> {%
+    client.global.set("new_therapist_token", response.body.data.accessToken);
+%}
+
+### T-6. 새 치료사 User ID 조회
+GET http://localhost:8080/api/v1/users/me
+Authorization: Bearer {{new_therapist_token}}
+> {%
+    client.global.set("new_therapist_user_id", response.body.data.id);
+    client.log("New Therapist User ID: " + response.body.data.id);
+%}
+
+### T-7. 새 치료사 등록
+POST http://localhost:8080/api/v1/therapists
+Content-Type: application/json
+Authorization: Bearer {{admin_token}}
+
+{
+  "userId": {{new_therapist_user_id}},
+  "specialty": "언어치료",
+  "experienceYears": 2
+}
+> {%
+    client.global.set("new_therapist_id", response.body.data);
+%}
+
+### T-8. 치료사 삭제 (Soft Delete)
+# 주의: 실행하면 치료사가 비활성화됩니다.
+DELETE http://localhost:8080/api/v1/therapists/{{new_therapist_id}}
+Authorization: Bearer {{admin_token}}
+
+### -----------------------------------------------
+### 아동 관리 API
+### -----------------------------------------------
+### C-1. 아동 목록 조회
+GET http://localhost:8080/api/v1/children
+Authorization: Bearer {{therapist_token}}
+
+### C-2. 아동 상세 조회
+GET http://localhost:8080/api/v1/children/{{child_id}}
+Authorization: Bearer {{therapist_token}}
+
+### C-3. 아동 정보 수정 (Admin Only)
+PUT http://localhost:8080/api/v1/children/{{child_id}}
+Content-Type: application/json
+Authorization: Bearer {{admin_token}}
+
+{
+  "name": "김철수",
+  "diagnosis": "자폐 스펙트럼 장애 (ASD) - 경증",
+  "currentDevLevel": "눈 맞춤 개선 중, 호명 반응 향상"
+}
+
+### C-4. 추가 아동 등록
+POST http://localhost:8080/api/v1/children
+Content-Type: application/json
+Authorization: Bearer {{admin_token}}
+
+{
+  "name": "김영희",
+  "birthDate": "2019-08-20",
+  "gender": "FEMALE",
+  "diagnosis": "발달 지연",
+  "currentDevLevel": "전반적인 발달 지연",
+  "parentCharacteristics": "치료에 적극적",
+  "requestDetails": "의사소통 능력 향상",
+  "therapistId": {{therapist_id}}
+}
+> {%
+    client.global.set("child_id_2", response.body.data);
+%}
+
+### -----------------------------------------------
+### 목표 관리 API
+### -----------------------------------------------
+### G-1. 목표 목록 조회
+GET http://localhost:8080/api/v1/children/{{child_id}}/goals
+Authorization: Bearer {{therapist_token}}
+
+### G-2. 목표 상세 조회
+GET http://localhost:8080/api/v1/goals/{{goal_id}}
+Authorization: Bearer {{therapist_token}}
+
+### G-3. 목표 수정
+PUT http://localhost:8080/api/v1/goals/{{goal_id}}
+Content-Type: application/json
+Authorization: Bearer {{therapist_token}}
+
+{
+  "name": "이름 부르면 눈 맞추기 (수정됨)",
+  "status": "IN_PROGRESS",
+  "targetSuccessRate": 85
+}
+
+### G-4. 추가 목표 생성
+POST http://localhost:8080/api/v1/children/{{child_id}}/goals
+Content-Type: application/json
+Authorization: Bearer {{therapist_token}}
+
+{
+  "name": "간단한 지시 따르기",
+  "category": "COMMUNICATION",
+  "description": "앉아, 일어서 등 간단한 지시에 반응하기",
+  "targetSuccessRate": 70,
+  "consecutiveDays": 5
+}
+> {%
+    client.global.set("goal_id_2", response.body.data);
+%}
+
+### -----------------------------------------------
+### 세션 관리 API
+### -----------------------------------------------
+### S-1. 세션 목록 조회 (기간 필터링)
+GET http://localhost:8080/api/v1/sessions?childId={{child_id}}&startDate=2026-02-01&endDate=2026-02-28
+Authorization: Bearer {{therapist_token}}
+
+### S-2. 세션 상세 조회
+GET http://localhost:8080/api/v1/sessions/{{session_id}}
+Authorization: Bearer {{therapist_token}}
+
+### S-3. 추가 세션 생성 (다중 시행)
+POST http://localhost:8080/api/v1/sessions
+Content-Type: application/json
+Authorization: Bearer {{therapist_token}}
+
+{
+  "childId": {{child_id}},
+  "therapistId": {{therapist_id}},
+  "sessionDate": "2026-02-06",
+  "duration": 45,
+  "notes": "세 번째 세션. 복수 목표 진행.",
+  "trials": [
+    {
+      "goalId": {{goal_id}},
+      "taskContent": "눈 맞춤 훈련",
+      "trials": 15,
+      "successes": 11,
+      "promptCount": 2,
+      "memo": "제스처 촉구 감소"
+    },
+    {
+      "goalId": {{goal_id_2}},
+      "taskContent": "앉아 지시 따르기",
+      "trials": 10,
+      "successes": 7,
+      "promptCount": 3,
+      "memo": "신체적 촉구 필요"
+    }
+  ]
+}
+
+### -----------------------------------------------
+### 리포트 관리 API
+### -----------------------------------------------
+### R-1. 리포트 목록 조회
+GET http://localhost:8080/api/v1/reports?childId={{child_id}}
+Authorization: Bearer {{therapist_token}}
+
+### R-2. 리포트 상세 조회
+GET http://localhost:8080/api/v1/reports/{{report_id}}
+Authorization: Bearer {{therapist_token}}
+
+### -----------------------------------------------
+### 이미지 마이그레이션 API (Vision AI)
+### -----------------------------------------------
+### I-1. 이미지 마이그레이션 테스트
+# OPENAI_API_KEY 환경변수가 필요합니다.
 POST http://localhost:8080/api/v1/migration/image
 Content-Type: multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW
-Authorization: Bearer {{auth_token}}
+Authorization: Bearer {{admin_token}}
 
 ------WebKitFormBoundary7MA4YWxkTrZu0gW
 Content-Disposition: form-data; name="file"; filename="migration_image_ex1.jpeg"
@@ -435,92 +604,64 @@ Content-Type: image/jpeg
 < ./test-data/migration_image_ex1.jpeg
 ------WebKitFormBoundary7MA4YWxkTrZu0gW--
 
-### 18-2. 이미지 마이그레이션 테스트 2 (예시 이미지 2)
-POST http://localhost:8080/api/v1/migration/image
-Content-Type: multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW
-Authorization: Bearer {{auth_token}}
+### -----------------------------------------------
+### 부모 계정 테스트
+### -----------------------------------------------
+### P-1. 부모 회원가입
+POST http://localhost:8080/api/v1/auth/register
+Content-Type: application/json
 
-------WebKitFormBoundary7MA4YWxkTrZu0gW
-Content-Disposition: form-data; name="file"; filename="migration_image_ex2.jpeg"
-Content-Type: image/jpeg
+{
+  "email": "parent@gmail.com",
+  "password": "parent1234",
+  "name": "김부모",
+  "role": "PARENT",
+  "inviteCode": "ABA2026"
+}
 
-< ./test-data/migration_image_ex2.jpeg
-------WebKitFormBoundary7MA4YWxkTrZu0gW--
+### P-2. 부모 로그인
+POST http://localhost:8080/api/v1/auth/login
+Content-Type: application/json
 
-### 18-3. 이미지 마이그레이션 테스트 3 (예시 이미지 3)
-POST http://localhost:8080/api/v1/migration/image
-Content-Type: multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW
-Authorization: Bearer {{auth_token}}
+{
+  "email": "parent@gmail.com",
+  "password": "parent1234"
+}
+> {%
+    client.global.set("parent_token", response.body.data.accessToken);
+%}
 
-------WebKitFormBoundary7MA4YWxkTrZu0gW
-Content-Disposition: form-data; name="file"; filename="migration_image_ex3.jpeg"
-Content-Type: image/jpeg
-
-< ./test-data/migration_image_ex3.jpeg
-------WebKitFormBoundary7MA4YWxkTrZu0gW--
+### P-3. 대시보드 조회 (Parent - 403 예상)
+# Parent 권한은 대시보드 접근 불가
+GET http://localhost:8080/api/v1/dashboard/summary
+Authorization: Bearer {{parent_token}}
 
 ### ===============================================
-### 아래는 수정/삭제 API (Missing API)
+### [PART 3] 삭제 API (주의: 데이터가 삭제됩니다!)
 ### ===============================================
 
-### 19. 내 정보 조회 (Get My Profile)
-GET http://localhost:8080/api/v1/users/me
-Authorization: Bearer {{auth_token}}
+### D-1. 목표 삭제
+# 주의: 실행하면 목표가 삭제됩니다.
+#DELETE http://localhost:8080/api/v1/goals/{{goal_id_2}}
+#Authorization: Bearer {{therapist_token}}
 
-### 20. 내 정보 수정 (Update My Profile)
-PUT http://localhost:8080/api/v1/users/me
-Content-Type: application/json
-Authorization: Bearer {{auth_token}}
+### D-2. 세션 삭제
+# 주의: 실행하면 세션과 시행 기록이 함께 삭제됩니다.
+#DELETE http://localhost:8080/api/v1/sessions/{{session_id}}
+#Authorization: Bearer {{therapist_token}}
 
-{
-  "name": "김치료사(수정됨)"
-}
+### D-3. 리포트 삭제
+# 주의: 실행하면 리포트가 삭제됩니다.
+#DELETE http://localhost:8080/api/v1/reports/{{report_id}}
+#Authorization: Bearer {{therapist_token}}
 
-### 21. 아동 정보 수정 (Update Child) - Admin Only
-# 먼저 4번(Admin Login)을 실행해서 admin 토큰을 받으세요.
-PUT http://localhost:8080/api/v1/children/{{child_id}}
-Content-Type: application/json
-Authorization: Bearer {{auth_token}}
+### D-4. 아동 삭제 (Admin Only)
+# 주의: 실행하면 아동과 연관된 모든 데이터가 삭제됩니다.
+#DELETE http://localhost:8080/api/v1/children/{{child_id}}
+#Authorization: Bearer {{admin_token}}
 
-{
-  "name": "김영희(수정)",
-  "diagnosis": "자폐 스펙트럼 장애 (ASD) - 경증",
-  "currentDevLevel": "눈 맞춤 개선 중, 단어 발화 증가"
-}
-
-### 22. 목표 상세 조회 (Get Goal Detail)
-GET http://localhost:8080/api/v1/goals/{{goal_id}}
-Authorization: Bearer {{auth_token}}
-
-### 23. 목표 수정 (Update Goal)
-PUT http://localhost:8080/api/v1/goals/{{goal_id}}
-Content-Type: application/json
-Authorization: Bearer {{auth_token}}
-
-{
-  "name": "5분간 한 가지 일에 집중 (수정됨)",
-  "status": "IN_PROGRESS",
-  "targetSuccessRate": 70
-}
-
-### 24. 목표 삭제 (Delete Goal)
-# ⚠️ 주의: 실행하면 목표가 삭제됩니다.
-DELETE http://localhost:8080/api/v1/goals/{{goal_id}}
-Authorization: Bearer {{auth_token}}
-
-### 25. 세션 삭제 (Delete Session)
-# ⚠️ 주의: 실행하면 세션과 시행 기록이 함께 삭제됩니다.
-DELETE http://localhost:8080/api/v1/sessions/{{session_id}}
-Authorization: Bearer {{auth_token}}
-
-### 26. 리포트 삭제 (Delete Report)
-# ⚠️ 주의: 실행하면 리포트가 삭제됩니다.
-DELETE http://localhost:8080/api/v1/reports/{{report_id}}
-Authorization: Bearer {{auth_token}}
-
-### 27. 아동 삭제 (Delete Child) - Admin Only
-# ⚠️ 주의: 실행하면 아동과 연관된 모든 데이터(목표, 세션)가 삭제됩니다.
-# 먼저 4번(Admin Login)을 실행해서 admin 토큰을 받으세요.
-DELETE http://localhost:8080/api/v1/children/{{child_id}}
-Authorization: Bearer {{auth_token}}
+### D-5. 치료사 삭제 (Admin Only)
+# 주의: 실행하면 치료사가 비활성화됩니다.
+#DELETE http://localhost:8080/api/v1/therapists/{{therapist_id}}
+#Authorization: Bearer {{admin_token}}
 

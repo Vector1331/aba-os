@@ -27,7 +27,7 @@ public class SessionTrial {
     private Goal goal;
 
     @Column(name = "task_content", columnDefinition = "TEXT")
-    private String taskContent; // [신규] 과제 내용
+    private String taskContent; //  과제 내용
 
     @Column(nullable = false)
     private Integer trials;
@@ -39,5 +39,5 @@ public class SessionTrial {
     private Integer promptCount; // 촉구 횟수
 
     @Column(columnDefinition = "TEXT")
-    private String memo; // [신규] 상세 메모
+    private String memo; //  상세 메모
 }

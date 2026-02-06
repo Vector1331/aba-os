@@ -34,13 +34,13 @@ public class Goal {
     private String description; // 상세 설명
 
     @Column(name = "target_success_rate")
-    private Integer targetSuccessRate; // [신규] 목표 성공률
+    private Integer targetSuccessRate; //  목표 성공률
 
     @Column(name = "consecutive_days")
-    private Integer consecutiveDays; // [신규] 연속 달성일
+    private Integer consecutiveDays; //  연속 달성일
 
     @Column(name = "prompt_plan", columnDefinition = "TEXT")
-    private String promptPlan; // [신규] 촉구 계획
+    private String promptPlan; //  촉구 계획
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)

@@ -1,6 +1,7 @@
 package com.aba.os.abaosserver.controller;
 
 import com.aba.os.abaosserver.common.ApiResponse;
+import com.aba.os.abaosserver.dto.migration.DiaMigrationResponse;
 import com.aba.os.abaosserver.dto.migration.ImageMigrationResponse;
 import com.aba.os.abaosserver.dto.migration.MigrationResponse;
 import com.aba.os.abaosserver.service.MigrationService;
@@ -74,6 +75,48 @@ public class MigrationController {
             @Parameter(description = "수기 기록지 이미지 (JPEG, PNG, WebP, GIF)", required = true)
             @RequestParam("file") MultipartFile file) {
         ImageMigrationResponse result = migrationService.migrateFromImage(file);
+        return ResponseEntity.ok(ApiResponse.success(result));
+    }
+
+    /**
+     * DIA 템플릿 엑셀 데이터 마이그레이션
+     * POST /api/v1/migration/dia
+     *
+     * DIA 템플릿 구조:
+     * - V3: 아동명 (또는 W3)
+     * - V4: 세션 날짜 (또는 W4)
+     * - 4행부터 데이터 시작
+     * - C열: 과제 내용
+     * - H~Q열: 시행 마커 (+/-/p)
+     */
+    @Operation(
+            summary = "DIA 템플릿 엑셀 마이그레이션",
+            description = """
+                    DIA 템플릿 형식의 엑셀 파일(.xlsx)을 업로드하여 세션 및 시행 기록을 생성합니다.
+
+                    **템플릿 구조**:
+                    - V3 셀: 아동명 (V3이 "아동명" 라벨이면 W3에서 값 읽기)
+                    - V4 셀: 세션 날짜 (V4가 "날짜" 라벨이면 W4에서 값 읽기)
+                    - 4행부터: 데이터 행
+                    - C열: 과제 내용 (task_content)
+                    - H~Q열: 시행 마커
+                      - `+`: 성공
+                      - `-`: 실패
+                      - `p`: 촉구 (prompt)
+
+                    **처리 결과**:
+                    - 아동이 없으면 자동 생성
+                    - 세션 생성 (기본 50분)
+                    - 각 행마다 시행 기록(SessionTrial) 생성
+                    - trials: 마커 총 개수, successes: + 개수, promptCount: p 개수
+                    """
+    )
+    @PostMapping(value = "/dia", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ApiResponse<DiaMigrationResponse>> uploadDiaExcel(
+            @Parameter(description = "DIA 템플릿 엑셀 파일 (.xlsx)", required = true)
+            @RequestParam("file") MultipartFile file) {
+        DiaMigrationResponse result = migrationService.uploadDiaExcel(file);
         return ResponseEntity.ok(ApiResponse.success(result));
     }
 }

@@ -39,7 +39,7 @@ public class Child implements Persistable<Long> {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 10)
-    private Gender gender; // [신규] 성별
+    private Gender gender; //  성별
 
     @Column(nullable = false)
     private LocalDate birthDate;
