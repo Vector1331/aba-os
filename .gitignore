@@ -13,3 +13,6 @@ aba-back/aba-os-server/src/main/resources/application.yml
 aba-front/aba-os-demo-click-main/aba-os-demo-click-main/nginx.conf
 docker-compose.yml
 nul
+docs/CHANGELOG_2026-02-07.md
+2. 기능 정의 및 이력 관리서.xlsx
+3. DB 테이블 및 데이터 정의서.xlsx
