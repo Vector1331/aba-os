@@ -18,7 +18,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/v1/dashboard")
 @RequiredArgsConstructor
-@Tag(name = "6. 대시보드 (Dashboard)", description = "센터 현황 요약 API - 메인 화면용 통계 데이터")
+@Tag(name = "6. 대시보드 (Dashboard)")
 public class DashboardController {
 
     private final DashboardService dashboardService;
@@ -32,7 +32,7 @@ public class DashboardController {
     @Operation(
             summary = "대시보드 요약 정보 조회",
             description = """
-                    메인 화면용 통계 데이터를 조회합니다.
+                    STEP 8: 메인 화면용 통계 데이터를 조회합니다. Admin/Therapist 토큰으로 각각 테스트하세요.
 
                     **반환 데이터:**
                     - `activeCasesCount`: 활성 케이스(아동) 수

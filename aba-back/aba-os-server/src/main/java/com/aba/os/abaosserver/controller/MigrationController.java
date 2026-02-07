@@ -21,7 +21,7 @@ import org.springframework.web.multipart.MultipartFile;
 @RestController
 @RequestMapping("/api/v1/migration")
 @RequiredArgsConstructor
-@Tag(name = "7. 마이그레이션 (Migration)", description = "엑셀/이미지 데이터 마이그레이션 API (Admin 전용)")
+@Tag(name = "7. 마이그레이션 (Migration)")
 public class MigrationController {
 
     private final MigrationService migrationService;
@@ -36,7 +36,13 @@ public class MigrationController {
      */
     @Operation(
             summary = "엑셀 데이터 마이그레이션",
-            description = "엑셀 파일(.xlsx)을 업로드하여 아동 및 목표 데이터를 일괄 등록합니다."
+            description = """
+                    STEP 9-1: 엑셀 파일(.xlsx)을 업로드하여 아동 및 목표 데이터를 일괄 등록합니다.
+
+                    **엑셀 형식:**
+                    - Sheet 1 (Children): Name, BirthDate(yyyy-MM-dd), Gender(M/F), Diagnosis
+                    - Sheet 2 (Goals): ChildName, GoalContent, Category
+                    """
     )
     @PostMapping(value = "/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @PreAuthorize("hasRole('ADMIN')")
@@ -58,7 +64,8 @@ public class MigrationController {
     @Operation(
             summary = "이미지 기반 데이터 마이그레이션 (Vision AI)",
             description = """
-                    수기 기록지 이미지를 업로드하면 Vision AI가 아동 정보와 치료 목표를 자동으로 추출합니다.
+                    STEP 9-3: 수기 기록지 이미지를 업로드하면 Vision AI가 아동 정보와 치료 목표를 자동으로 추출합니다.
+                    (OPENAI_API_KEY 환경변수 필요)
 
                     **No-Storage Strategy**: 이미지는 서버에 저장되지 않고, 메모리에서 처리 후 즉시 삭제됩니다.
 
@@ -92,7 +99,7 @@ public class MigrationController {
     @Operation(
             summary = "DIA 템플릿 엑셀 마이그레이션",
             description = """
-                    DIA 템플릿 형식의 엑셀 파일(.xlsx)을 업로드하여 세션 및 시행 기록을 생성합니다.
+                    STEP 9-2: DIA 템플릿 형식의 엑셀 파일(.xlsx)을 업로드하여 세션 및 시행 기록을 생성합니다.
 
                     **템플릿 구조**:
                     - V3 셀: 아동명 (V3이 "아동명" 라벨이면 W3에서 값 읽기)
