@@ -22,7 +22,7 @@ import {
 type ViewMode = 'year' | 'month' | 'week' | 'day';
 
 export function SessionScheduler() {
-  const { sessions, children, therapists, goals } = useApp();
+  const { sessions, children, therapists, goals, role } = useApp();
   const navigate = useNavigate();
   const [viewMode, setViewMode] = useState<ViewMode>('month');
   const [currentDate, setCurrentDate] = useState(new Date(2025, 0, 3));
