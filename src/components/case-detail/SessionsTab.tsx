@@ -205,7 +205,6 @@ export function SessionsTab({ childId, sessions, goals }: SessionsTabProps) {
 
   // ── Not recording: show start button + recent history ──
   if (!isRecording) {
-    const recentSessions = [...sessions].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).slice(0, 3);
 
     return (
       <div className="space-y-6">
@@ -231,37 +230,6 @@ export function SessionsTab({ childId, sessions, goals }: SessionsTabProps) {
           )}
         </div>
 
-        {/* Recent sessions summary */}
-        {recentSessions.length > 0 && (
-          <div className="space-y-3">
-            <h3 className="text-sm font-semibold text-muted-foreground">최근 세션 ({sessions.length}회)</h3>
-            {recentSessions.map(session => {
-              const avgSuccess = session.trials.length > 0
-                ? Math.round(session.trials.reduce((a, t) => a + t.successes, 0) / Math.max(session.trials.reduce((a, t) => a + t.trials, 0), 1) * 100)
-                : 0;
-              return (
-                <div key={session.id} className="flex items-center justify-between rounded-lg border border-border/50 p-3">
-                  <div className="flex items-center gap-3">
-                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-muted text-xs font-semibold">
-                      {new Date(session.date).getDate()}
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium">
-                        {new Date(session.date).toLocaleDateString('ko-KR', { month: 'long', day: 'numeric' })}
-                      </p>
-                      <p className="text-xs text-muted-foreground">{session.duration}분 · {session.trialRecords?.length || 0} trials</p>
-                    </div>
-                  </div>
-                  <Badge className={cn('text-xs',
-                    avgSuccess >= 70 ? 'bg-success/10 text-success border-0' :
-                    avgSuccess >= 50 ? 'bg-warning/10 text-warning border-0' :
-                    'bg-destructive/10 text-destructive border-0'
-                  )}>{avgSuccess}%</Badge>
-                </div>
-              );
-            })}
-          </div>
-        )}
       </div>
     );
   }
