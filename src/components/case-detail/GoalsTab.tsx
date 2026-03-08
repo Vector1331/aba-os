@@ -300,7 +300,7 @@ export function GoalsTab({ childId, goals }: GoalsTabProps) {
                       <Badge variant="outline" className="text-[10px]">
                         {lto.domain ? getDomainLabel(lto.domain) : lto.category}
                       </Badge>
-                      <Badge variant="secondary" className="text-[10px]">LTO</Badge>
+                      <Badge variant="secondary" className="text-[10px]">장기목표</Badge>
                       <Badge className={`text-[10px] ${getStatusColor(lto.status)}`}>
                         {lto.status === 'active' ? '활성' : lto.status === 'mastered' ? '달성' : '일시정지'}
                       </Badge>
