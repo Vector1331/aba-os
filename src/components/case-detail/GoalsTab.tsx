@@ -320,7 +320,7 @@ export function GoalsTab({ childId, goals }: GoalsTabProps) {
                       <div key={sto.id} className="flex items-start gap-3 p-3 pl-12 border-b last:border-b-0">
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 mb-1">
-                            <Badge variant="outline" className="text-[10px]">STO</Badge>
+                            <Badge variant="outline" className="text-[10px]">단기목표</Badge>
                             <Badge className={`text-[10px] ${getStatusColor(sto.status)}`}>
                               {sto.status === 'active' ? '활성' : sto.status === 'mastered' ? '달성' : '일시정지'}
                             </Badge>
