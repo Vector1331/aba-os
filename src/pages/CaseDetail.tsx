@@ -69,7 +69,7 @@ export default function CaseDetail() {
 
         {/* Overview Tab */}
         <TabsContent value="overview" className="space-y-6">
-          <div className="rounded-xl border border-border bg-card p-5 space-y-4">
+          <div className="rounded-xl border border-border bg-card p-5">
             <div className="grid gap-6 sm:grid-cols-2">
               {/* 아동 정보 */}
               <div className="space-y-3">
@@ -88,48 +88,30 @@ export default function CaseDetail() {
                 </div>
               </div>
 
-              {/* 보호자 정보 */}
-              <div className="space-y-3">
-                <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">보호자 정보</h3>
-                <div className="flex items-center gap-3">
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-muted text-sm font-semibold">
-                    {child.guardianName?.charAt(0)}
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium">{child.guardianName} <span className="text-muted-foreground font-normal">({child.guardianRelation})</span></p>
-                    <p className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5"><Phone className="h-3 w-3" />{child.guardianPhone}</p>
+              {/* 보호자 정보 + 주요 사항 */}
+              <div className="space-y-4">
+                <div className="space-y-3">
+                  <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">보호자 정보</h3>
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-muted text-sm font-semibold">
+                      {child.guardianName?.charAt(0)}
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium">{child.guardianName} <span className="text-muted-foreground font-normal">({child.guardianRelation})</span></p>
+                      <p className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5"><Phone className="h-3 w-3" />{child.guardianPhone}</p>
+                    </div>
                   </div>
                 </div>
-              </div>
-            </div>
 
-            {/* 주요 사항 */}
-            <div className="border-t border-border/50 pt-4 space-y-3">
-              <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">주요 사항</h3>
-              <div className="grid gap-3 sm:grid-cols-2">
-                {/* 최초 */}
-                <div className="rounded-lg bg-muted/30 px-4 py-3 space-y-1.5">
-                  <p className="text-[11px] font-semibold text-muted-foreground">최초</p>
-                  <ul className="space-y-1">
-                    {(child.concern || '언어발달지연, 사회적 상호작용 어려움').split(/[,،]/).map((item, i) => (
-                      <li key={i} className="text-sm text-foreground flex items-start gap-1.5">
-                        <span className="text-muted-foreground mt-0.5">•</span>
-                        <span>{item.trim()}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-                {/* 최근 */}
-                <div className="rounded-lg bg-primary/5 border border-primary/10 px-4 py-3 space-y-1.5">
-                  <p className="text-[11px] font-semibold text-primary">최근</p>
-                  <ul className="space-y-1">
-                    {(child.notes || '눈맞춤빈도 증가, 단어사용량 향상').split(/[,،]/).map((item, i) => (
-                      <li key={i} className="text-sm text-foreground flex items-start gap-1.5">
-                        <span className="text-primary mt-0.5">▲</span>
-                        <span>{item.trim()}</span>
-                      </li>
-                    ))}
-                  </ul>
+                {/* 주요 사항 */}
+                <div className="space-y-2">
+                  <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">주요 사항</h3>
+                  {child.concern && (
+                    <p className="text-xs text-muted-foreground">📌 {child.concern}</p>
+                  )}
+                  {child.notes && (
+                    <p className="text-xs text-foreground">📝 {child.notes}</p>
+                  )}
                 </div>
               </div>
             </div>

@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { useApp } from '@/context/AppContext';
+import { getDomainLabel } from '@/data/mockData';
 import {
   addDays, subDays, startOfWeek, endOfWeek, startOfMonth, endOfMonth,
   format, isSameDay, isSameMonth, eachDayOfInterval, eachMonthOfInterval,
@@ -22,7 +23,7 @@ import {
 type ViewMode = 'year' | 'month' | 'week' | 'day';
 
 export function SessionScheduler() {
-  const { sessions, children, therapists, goals } = useApp();
+  const { sessions, children, therapists, goals, role } = useApp();
   const navigate = useNavigate();
   const [viewMode, setViewMode] = useState<ViewMode>('month');
   const [currentDate, setCurrentDate] = useState(new Date(2025, 0, 3));
@@ -87,11 +88,24 @@ export function SessionScheduler() {
   const detailChild = detailSession ? children.find(c => c.id === detailSession.childId) : null;
   const detailTherapist = detailSession ? therapists.find(t => t.id === detailSession.therapistId) : null;
 
+  const isAdmin = role === 'admin';
+
+  // Get main domain labels for a session's trials
+  const getSessionDomains = (session: typeof sessions[0]) => {
+    const domainSet = new Set<string>();
+    session.trials.forEach(t => {
+      const goal = goals.find(g => g.id === t.goalId);
+      if (goal?.domain) {
+        const domainInfo = getDomainLabel(goal.domain);
+        domainSet.add(domainInfo);
+      }
+    });
+    return Array.from(domainSet).slice(0, 2);
+  };
+
   const renderSessionBadge = (session: typeof sessions[0], compact = false) => {
     const child = children.find(c => c.id === session.childId);
-    const totalTrials = session.trials.reduce((a, t) => a + t.trials, 0);
-    const totalSuccesses = session.trials.reduce((a, t) => a + t.successes, 0);
-    const avgRate = totalTrials > 0 ? Math.round((totalSuccesses / totalTrials) * 100) : 0;
+    const domains = getSessionDomains(session);
 
     return (
       <button
@@ -101,10 +115,10 @@ export function SessionScheduler() {
           'w-full text-left rounded-md px-1.5 py-0.5 text-[10px] font-medium truncate transition-colors',
           'bg-primary/10 text-primary hover:bg-primary/20 border border-primary/20'
         )}
-        title={`${child?.name} · ${avgRate}%`}
+        title={`${child?.name}${domains.length > 0 ? ' · ' + domains.join(', ') : ''}`}
       >
-        {compact ? child?.name?.charAt(0) : child?.name}
-        {!compact && <span className="ml-1 opacity-70">{avgRate}%</span>}
+        {child?.name}
+        {!compact && domains.length > 0 && <span className="ml-1 opacity-60 text-[9px]">{domains[0]}</span>}
       </button>
     );
   };
@@ -218,7 +232,7 @@ export function SessionScheduler() {
                       </span>
                       {daySessions.length > 0 && (
                         <div className="flex flex-col gap-0.5 mt-0.5 flex-1">
-                          {daySessions.slice(0, 2).map(s => renderSessionBadge(s, true))}
+                          {daySessions.slice(0, 2).map(s => renderSessionBadge(s))}
                           {daySessions.length > 2 && (
                             <span className="text-[9px] text-muted-foreground text-center">+{daySessions.length - 2}</span>
                           )}
@@ -257,9 +271,21 @@ export function SessionScheduler() {
                           today && 'text-primary'
                         )}>{format(day, 'd')}</p>
                       </div>
-                      {/* Sessions in cell */}
                       <div className="flex flex-col gap-1 p-1 flex-1">
-                        {daySessions.map(s => renderSessionBadge(s))}
+                        {daySessions.map(s => {
+                          const child = children.find(c => c.id === s.childId);
+                          const domains = getSessionDomains(s);
+                          return (
+                            <button
+                              key={s.id}
+                              onClick={() => setSelectedSession(s.id)}
+                              className="w-full text-left rounded-md px-1.5 py-1 text-[10px] font-medium truncate transition-colors bg-primary/10 text-primary hover:bg-primary/20 border border-primary/20"
+                            >
+                              <p className="truncate">{child?.name}</p>
+                              <p className="text-[9px] opacity-60 truncate">{s.duration}분{domains.length > 0 ? ` · ${domains[0]}` : ''}</p>
+                            </button>
+                          );
+                        })}
                         {daySessions.length === 0 && (
                           <p className="text-[9px] text-muted-foreground text-center mt-4 opacity-50">—</p>
                         )}
@@ -297,9 +323,7 @@ export function SessionScheduler() {
                               {sessionsAtHour.map(session => {
                                 const child = children.find(c => c.id === session.childId);
                                 const therapist = therapists.find(t => t.id === session.therapistId);
-                                const totalTrials = session.trials.reduce((a, t) => a + t.trials, 0);
-                                const totalSuccesses = session.trials.reduce((a, t) => a + t.successes, 0);
-                                const avgRate = totalTrials > 0 ? Math.round((totalSuccesses / totalTrials) * 100) : 0;
+                                const domains = getSessionDomains(session);
 
                                 return (
                                   <button
@@ -307,21 +331,12 @@ export function SessionScheduler() {
                                     onClick={() => setSelectedSession(session.id)}
                                     className="w-full text-left rounded-lg bg-primary/10 border border-primary/20 p-2 hover:bg-primary/15 transition-colors"
                                   >
-                                    <div className="flex items-center justify-between">
-                                      <div>
-                                        <p className="text-sm font-medium text-foreground">{child?.name}</p>
-                                        <p className="text-[11px] text-muted-foreground">
-                                          {therapist?.name} · {session.duration}분
-                                        </p>
-                                      </div>
-                                      <Badge className={cn('text-xs',
-                                        avgRate >= 70 ? 'bg-success/10 text-success border-0' :
-                                        avgRate >= 50 ? 'bg-warning/10 text-warning border-0' :
-                                        'bg-destructive/10 text-destructive border-0'
-                                      )}>
-                                        {avgRate}%
-                                      </Badge>
-                                    </div>
+                                    <p className="text-sm font-medium text-foreground">{child?.name}</p>
+                                    <p className="text-[11px] text-muted-foreground">
+                                      {session.duration}분
+                                      {domains.length > 0 && ` · ${domains.join(', ')}`}
+                                      {isAdmin && therapist && ` · ${therapist.name}`}
+                                    </p>
                                   </button>
                                 );
                               })}
