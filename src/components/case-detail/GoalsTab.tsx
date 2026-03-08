@@ -31,7 +31,7 @@ interface GoalsTabProps {
 }
 
 export function GoalsTab({ childId, goals }: GoalsTabProps) {
-  const { addGoal, role } = useApp();
+  const { addGoal, updateGoal, role } = useApp();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedLevel, setSelectedLevel] = useState<VBMAPPLevel | 'all'>('all');
   const [expandedLTOs, setExpandedLTOs] = useState<Set<string>>(new Set());
