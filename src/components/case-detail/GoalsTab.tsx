@@ -128,9 +128,9 @@ export function GoalsTab({ childId, goals }: GoalsTabProps) {
     <div className="space-y-4">
       <div className="flex items-center justify-between flex-wrap gap-2">
         <div className="flex items-center gap-3">
-          <h2 className="text-lg font-semibold">VB-MAPP 목표</h2>
+          <h2 className="text-lg font-semibold">치료 목표</h2>
           <Badge variant="outline" className="text-xs">
-            LTO {activeLTOs}개 · STO {totalSTOs}개
+            장기 {activeLTOs}개 · 단기 {totalSTOs}개
           </Badge>
         </div>
         <div className="flex items-center gap-2">
