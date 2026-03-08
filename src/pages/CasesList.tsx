@@ -207,7 +207,6 @@ export default function CasesList() {
           </h2>
           <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
             {myChildren.map(child => {
-              const successRate = childStats[child.id]?.successRate || 0;
               return (
                 <button
                   key={child.id}
@@ -221,12 +220,7 @@ export default function CasesList() {
                     <p className="text-sm font-medium truncate">{child.name}</p>
                     <p className="text-xs text-muted-foreground">{child.age}세 · {child.diagnosis || child.concern}</p>
                   </div>
-                  <div className="flex flex-col items-end gap-1">
-                    <span className={`text-xs font-semibold ${successRate >= 70 ? 'text-success' : successRate >= 50 ? 'text-warning' : 'text-destructive'}`}>
-                      {successRate}%
-                    </span>
-                    {getTrendBadge(child.trend)}
-                  </div>
+                  {getStatusBadge(child.status)}
                 </button>
               );
             })}
