@@ -13,14 +13,13 @@ import { ReportsTab } from '@/components/case-detail/ReportsTab';
 export default function CaseDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { getChildById, getGoalsByChildId, getSessionsByChildId, getReportsByChildId, getTherapistById } = useApp();
+  const { getChildById, getGoalsByChildId, getSessionsByChildId, getReportsByChildId } = useApp();
   const [activeTab, setActiveTab] = useState('overview');
 
   const child = getChildById(id || '');
   const goals = getGoalsByChildId(id || '');
   const sessions = getSessionsByChildId(id || '');
   const reports = getReportsByChildId(id || '');
-  const therapist = child ? getTherapistById(child.therapistId) : undefined;
 
   if (!child) {
     return (

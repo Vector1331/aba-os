@@ -205,7 +205,6 @@ export function SessionsTab({ childId, sessions, goals }: SessionsTabProps) {
 
   // ── Not recording: show start button + recent history ──
   if (!isRecording) {
-    const recentSessions = [...sessions].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).slice(0, 3);
 
     return (
       <div className="space-y-6">
