@@ -309,7 +309,7 @@ export function GoalsTab({ childId, goals }: GoalsTabProps) {
                     <p className="text-xs text-muted-foreground truncate">{lto.description}</p>
                   </div>
                   <div className="text-xs text-muted-foreground whitespace-nowrap">
-                    STO {activeSTOs}/{childSTOs.length}
+                    단기 {activeSTOs}/{childSTOs.length}
                   </div>
                 </div>
 
