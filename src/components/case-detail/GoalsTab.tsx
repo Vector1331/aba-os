@@ -161,7 +161,7 @@ export function GoalsTab({ childId, goals }: GoalsTabProps) {
               </DialogTrigger>
               <DialogContent className="max-w-lg">
                 <DialogHeader>
-                  <DialogTitle>새 VB-MAPP 목표 추가</DialogTitle>
+                  <DialogTitle>새 치료 목표 추가</DialogTitle>
                 </DialogHeader>
                 <div className="grid gap-4 py-4">
                   {/* Objective Type */}
