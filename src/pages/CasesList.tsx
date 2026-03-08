@@ -207,7 +207,6 @@ export default function CasesList() {
           </h2>
           <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
             {myChildren.map(child => {
-              const successRate = childStats[child.id]?.successRate || 0;
               return (
                 <button
                   key={child.id}
