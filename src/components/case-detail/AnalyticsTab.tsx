@@ -584,6 +584,60 @@ export function AnalyticsTab({ sessions, goals }: AnalyticsTabProps) {
           {selectedSession && <SessionDetailContent session={selectedSession} goals={goals} />}
         </DialogContent>
       </Dialog>
+
+      {/* Goal detail dialog */}
+      <Dialog open={!!goalDetailStat} onOpenChange={(open) => !open && setGoalDetailStat(null)}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              {goalDetailStat?.goal?.title}
+              {goalDetailStat && getTrendIcon(goalDetailStat.rateTrend)}
+            </DialogTitle>
+          </DialogHeader>
+          {goalDetailStat && (() => {
+            const stat = goalDetailStat;
+            const change = stat.lastRate - stat.firstRate;
+            const lines: string[] = [];
+            if (stat.rateTrend === 'up') {
+              lines.push(`꾸준한 성장을 보이고 있습니다. 성공률이 ${stat.firstRate}%에서 ${stat.lastRate}%로 ${Math.abs(change)}%p 향상되었습니다.`);
+              if (stat.lastRate >= 80) lines.push('현재 목표 달성 기준에 근접해 있어, 곧 다음 단계로 넘어갈 수 있을 것으로 기대됩니다.');
+              else lines.push('이 추세가 유지되면 조만간 목표 달성이 가능할 것으로 보입니다.');
+            } else if (stat.rateTrend === 'down') {
+              lines.push(`성공률이 ${stat.firstRate}%에서 ${stat.lastRate}%로 다소 낮아졌습니다.`);
+              lines.push('일시적인 변동일 수 있으며, 자극의 난이도를 조정하거나 동기부여 전략을 변경하여 다시 향상을 유도할 계획입니다.');
+            } else {
+              lines.push(`${stat.lastRate}% 수준을 안정적으로 유지하고 있습니다.`);
+              lines.push('안정적인 수행은 학습이 내재화되고 있다는 좋은 신호입니다. 점진적으로 난이도를 높여볼 수 있습니다.');
+            }
+            lines.push(`총 ${stat.sessionCount}회 세션에서 해당 활동을 진행했습니다.`);
+
+            return (
+              <div className="space-y-4">
+                <div className="grid grid-cols-3 gap-3">
+                  <div className="rounded-lg bg-muted/40 p-3 text-center">
+                    <p className="text-lg font-bold">{stat.firstRate}%</p>
+                    <p className="text-[10px] text-muted-foreground">초기</p>
+                  </div>
+                  <div className="rounded-lg bg-muted/40 p-3 text-center">
+                    <p className="text-lg font-bold">→</p>
+                  </div>
+                  <div className="rounded-lg bg-muted/40 p-3 text-center">
+                    <p className={cn('text-lg font-bold', stat.rateTrend === 'up' ? 'text-success' : stat.rateTrend === 'down' ? 'text-destructive' : '')}>{stat.lastRate}%</p>
+                    <p className="text-[10px] text-muted-foreground">최근</p>
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <h4 className="text-sm font-semibold">추이 요약 및 의견</h4>
+                  {lines.map((line, i) => (
+                    <p key={i} className="text-sm text-muted-foreground leading-relaxed">{line}</p>
+                  ))}
+                </div>
+                <div className="rounded-lg bg-muted/30 px-3 py-2">
+                  <p className="text-xs text-muted-foreground">📌 {stat.goal.category} 영역 · {stat.sessionCount}회 세션 기록</p>
+                </div>
+              </div>
+            );
+          })()}
     </div>
   );
 }
