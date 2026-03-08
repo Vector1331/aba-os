@@ -70,13 +70,12 @@ export default function CaseDetail() {
 
         {/* Overview Tab */}
         <TabsContent value="overview" className="space-y-6">
-          {/* Compact Child + Guardian + Therapist Info */}
-          <div className="rounded-xl border border-border bg-card p-4">
-            <div className="grid gap-4 sm:grid-cols-3">
+          <div className="rounded-xl border border-border bg-card p-5">
+            <div className="grid gap-6 sm:grid-cols-2">
               {/* Child Info */}
-              <div className="space-y-1">
+              <div className="space-y-3">
                 <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">아동 정보</h3>
-                <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-sm">
+                <div className="grid grid-cols-[auto_1fr] gap-x-6 gap-y-2 text-sm">
                   <span className="text-muted-foreground">나이</span>
                   <span className="font-medium">{child.age}세</span>
                   <span className="text-muted-foreground">생년월일</span>
@@ -85,45 +84,33 @@ export default function CaseDetail() {
                   <span className="font-medium">{new Date(child.startDate).toLocaleDateString('ko-KR')}</span>
                   <span className="text-muted-foreground">최근 세션</span>
                   <span className="font-medium">{child.lastSessionDate ? new Date(child.lastSessionDate).toLocaleDateString('ko-KR') : '-'}</span>
+                  <span className="text-muted-foreground">진단</span>
+                  <span className="font-medium">{child.diagnosis || '-'}</span>
                 </div>
                 {child.concern && (
-                  <p className="text-xs text-muted-foreground pt-1">📌 {child.concern}</p>
+                  <p className="text-xs text-muted-foreground pt-1 bg-muted/30 rounded-md px-3 py-2">📌 {child.concern}</p>
                 )}
               </div>
 
               {/* Guardian */}
-              <div className="space-y-1">
-                <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">보호자</h3>
-                <div className="flex items-center gap-2">
-                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-muted text-xs font-semibold">
+              <div className="space-y-3">
+                <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">보호자 정보</h3>
+                <div className="flex items-center gap-3">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-muted text-sm font-semibold">
                     {child.guardianName?.charAt(0)}
                   </div>
                   <div>
                     <p className="text-sm font-medium">{child.guardianName} <span className="text-muted-foreground font-normal">({child.guardianRelation})</span></p>
-                    <p className="text-xs text-muted-foreground flex items-center gap-1"><Phone className="h-3 w-3" />{child.guardianPhone}</p>
+                    <p className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5"><Phone className="h-3 w-3" />{child.guardianPhone}</p>
                   </div>
                 </div>
-              </div>
-
-              {/* Therapist */}
-              <div className="space-y-1">
-                <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">담당 치료사</h3>
-                {therapist && (
-                  <div className="flex items-center gap-2">
-                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-semibold text-primary">
-                      {therapist.name.charAt(0)}
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium">{therapist.name}</p>
-                      <p className="text-xs text-muted-foreground">{therapist.specialization}</p>
-                    </div>
+                {child.notes && (
+                  <div className="pt-2">
+                    <p className="text-xs text-muted-foreground bg-muted/30 rounded-md px-3 py-2">📝 {child.notes}</p>
                   </div>
                 )}
               </div>
             </div>
-            {child.notes && (
-              <p className="text-xs text-muted-foreground mt-3 pt-3 border-t border-border/50">📝 {child.notes}</p>
-            )}
           </div>
 
           {/* Goals Section - takes up most of the space */}
