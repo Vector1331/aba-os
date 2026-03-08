@@ -641,32 +641,53 @@ export function AnalyticsTab({ sessions, goals }: AnalyticsTabProps) {
             const stat = goalDetailStat;
             const change = stat.lastRate - stat.firstRate;
             const promptLabels = ['독립 수행', '살짝 힌트', '말로 안내', '시범', '직접 도움'];
-            const lines: string[] = [];
+            const formatDate = (d: string) => {
+              const date = new Date(d);
+              return `${date.getMonth() + 1}/${date.getDate()}`;
+            };
 
-            // 성공률 변화 해석
+            // Build narrative paragraphs
+            const paragraphs: string[] = [];
+
+            // 1. Overall change narrative
             if (stat.rateTrend === 'up') {
-              lines.push(`성공률이 ${stat.firstRate}%에서 ${stat.lastRate}%로 ${Math.abs(change)}%p 상승했습니다.`);
+              paragraphs.push(`이 목표는 전체 ${stat.sessionCount}회 세션 동안 뚜렷한 성장세를 보였습니다. 초기 ${stat.firstRate}%였던 성공률이 최근 ${stat.lastRate}%까지 ${Math.abs(change)}%p 상승했으며, 총 ${stat.totalTrialCount}회의 시행을 통해 꾸준히 수행 능력이 향상되고 있음을 확인할 수 있습니다.`);
             } else if (stat.rateTrend === 'down') {
-              lines.push(`성공률이 ${stat.firstRate}%에서 ${stat.lastRate}%로 ${Math.abs(change)}%p 하락했습니다.`);
+              paragraphs.push(`이 목표는 전체 ${stat.sessionCount}회 세션 동안 성공률이 ${stat.firstRate}%에서 ${stat.lastRate}%로 ${Math.abs(change)}%p 하락한 것으로 나타났습니다. 총 ${stat.totalTrialCount}회 시행 기록을 살펴보면, 특정 시점에서 수행 수준의 변화가 관찰됩니다.`);
             } else {
-              lines.push(`성공률 ${stat.lastRate}%로 일정한 수준을 유지하고 있습니다.`);
+              paragraphs.push(`이 목표는 전체 ${stat.sessionCount}회 세션, ${stat.totalTrialCount}회 시행을 거치며 성공률 ${stat.lastRate}% 수준을 안정적으로 유지하고 있습니다. 일관된 수행 수준이 확인됩니다.`);
             }
 
-            // 촉진(도움) 수준 변화
+            // 2. Notable jumps
+            if (stat.notableChanges.length > 0) {
+              const jumpDescs = stat.notableChanges.map((nc: any) => {
+                if (nc.diff > 0) {
+                  return `${formatDate(nc.from.date)} → ${formatDate(nc.to.date)} 세션 사이에 성공률이 ${nc.from.rate}%에서 ${nc.to.rate}%로 ${nc.diff}%p 급상승했습니다`;
+                } else {
+                  return `${formatDate(nc.from.date)} → ${formatDate(nc.to.date)} 세션 사이에 성공률이 ${nc.from.rate}%에서 ${nc.to.rate}%로 ${Math.abs(nc.diff)}%p 하락했습니다`;
+                }
+              });
+              paragraphs.push(`특이 변화: ${jumpDescs.join('. ')}. 해당 시점의 세션 환경이나 아동 컨디션을 함께 살펴보면 변화 원인을 파악하는 데 도움이 됩니다.`);
+            }
+
+            // 3. Best / worst session
+            if (stat.sessionCount >= 3 && stat.bestSession.rate !== stat.worstSession.rate) {
+              paragraphs.push(`가장 높은 수행을 보인 세션은 ${formatDate(stat.bestSession.date)}(성공률 ${stat.bestSession.rate}%)이며, 가장 낮았던 세션은 ${formatDate(stat.worstSession.date)}(성공률 ${stat.worstSession.rate}%)입니다.`);
+            }
+
+            // 4. Prompt level change
             if (stat.firstPrompt !== stat.lastPrompt) {
-              const promptDir = stat.lastPrompt < stat.firstPrompt ? '줄어들었습니다' : '늘어났습니다';
-              lines.push(`도움 수준이 "${promptLabels[Math.round(stat.firstPrompt)]}"에서 "${promptLabels[Math.round(stat.lastPrompt)]}"(으)로 ${promptDir}.`);
+              const promptDir = stat.lastPrompt < stat.firstPrompt ? '감소' : '증가';
+              paragraphs.push(`도움 수준은 초기 "${promptLabels[Math.round(stat.firstPrompt)]}"에서 최근 "${promptLabels[Math.round(stat.lastPrompt)]}"(으)로 ${promptDir}했습니다. ${stat.lastPrompt < stat.firstPrompt ? '아동이 점차 독립적으로 수행하고 있음을 의미합니다.' : '현재 더 많은 지원이 필요한 상태로, 과제 난이도나 접근 방식을 점검해 볼 필요가 있습니다.'}`);
             } else {
-              lines.push(`도움 수준은 "${promptLabels[Math.round(stat.avgPrompt)]}" 단계에서 유지되고 있습니다.`);
+              paragraphs.push(`도움 수준은 "${promptLabels[Math.round(stat.avgPrompt)]}" 단계에서 일관되게 유지되고 있습니다.`);
             }
 
-            // 문제행동 기록
+            // 5. Problem behaviors
             if (stat.totalProblems > 0) {
-              lines.push(`기간 내 문제행동이 총 ${stat.totalProblems}회 관찰되었습니다.`);
+              const problemRatio = stat.problemSessions.length;
+              paragraphs.push(`문제행동은 총 ${stat.totalProblems}회 관찰되었으며, ${problemRatio}개 세션에서 발생했습니다.${stat.problemSessions.length >= stat.sessionCount / 2 ? ' 절반 이상의 세션에서 문제행동이 나타나고 있어, 해당 목표 수행 시 선행 환경 조정이나 대체 행동 지도를 함께 고려해 볼 수 있습니다.' : ''}`);
             }
-
-            // 시행 횟수
-            lines.push(`총 ${stat.sessionCount}회 세션, ${stat.totalTrialCount}회 시행 기록 기준입니다.`);
 
             return (
               <div className="space-y-4">
@@ -675,22 +696,25 @@ export function AnalyticsTab({ sessions, goals }: AnalyticsTabProps) {
                     <p className="text-lg font-bold">{stat.firstRate}%</p>
                     <p className="text-[10px] text-muted-foreground">초기</p>
                   </div>
-                  <div className="rounded-lg bg-muted/40 p-3 text-center">
-                    <p className="text-lg font-bold">→</p>
+                  <div className="rounded-lg bg-muted/40 p-3 text-center flex flex-col items-center justify-center">
+                    <p className={cn('text-lg font-bold', change > 0 ? 'text-success' : change < 0 ? 'text-destructive' : 'text-muted-foreground')}>
+                      {change > 0 ? `+${change}` : change}%p
+                    </p>
+                    <p className="text-[10px] text-muted-foreground">변화</p>
                   </div>
                   <div className="rounded-lg bg-muted/40 p-3 text-center">
                     <p className={cn('text-lg font-bold', stat.rateTrend === 'up' ? 'text-success' : stat.rateTrend === 'down' ? 'text-destructive' : '')}>{stat.lastRate}%</p>
                     <p className="text-[10px] text-muted-foreground">최근</p>
                   </div>
                 </div>
-                <div className="space-y-2">
-                  <h4 className="text-sm font-semibold">변화 추이 해석</h4>
-                  {lines.map((line, i) => (
-                    <p key={i} className="text-sm text-muted-foreground leading-relaxed">{line}</p>
+                <div className="space-y-3">
+                  <h4 className="text-sm font-semibold">📋 상세 해석</h4>
+                  {paragraphs.map((p, i) => (
+                    <p key={i} className="text-sm text-muted-foreground leading-relaxed">{p}</p>
                   ))}
                 </div>
                 <div className="rounded-lg bg-muted/30 px-3 py-2">
-                  <p className="text-xs text-muted-foreground">📌 {stat.goal.category} 영역 · {stat.sessionCount}회 세션 기록</p>
+                  <p className="text-xs text-muted-foreground">📌 {stat.goal.category} 영역 · {stat.sessionCount}회 세션 · {stat.totalTrialCount}회 시행</p>
                 </div>
               </div>
             );
