@@ -309,8 +309,20 @@ export function GoalsTab({ childId, goals }: GoalsTabProps) {
                     <h3 className="font-semibold text-sm">{lto.title}</h3>
                     <p className="text-xs text-muted-foreground truncate">{lto.description}</p>
                   </div>
-                  <div className="text-xs text-muted-foreground whitespace-nowrap">
-                    단기 {activeSTOs}/{childSTOs.length}
+                  <div className="flex items-center gap-3 whitespace-nowrap">
+                    <div className="text-xs text-muted-foreground">
+                      단기 {activeSTOs}/{childSTOs.length}
+                    </div>
+                    {canCreate && (
+                      <Switch
+                        checked={lto.status === 'active'}
+                        onCheckedChange={(checked) => {
+                          updateGoal(lto.id, { status: checked ? 'active' : 'paused' });
+                        }}
+                        onClick={(e) => e.stopPropagation()}
+                        className="scale-75"
+                      />
+                    )}
                   </div>
                 </div>
 
