@@ -379,10 +379,12 @@ export function SessionScheduler() {
               </div>
 
               <div className="grid gap-2 text-sm">
-                <div className="flex items-center justify-between rounded-lg bg-muted/40 px-3 py-2">
-                  <span className="text-muted-foreground">치료사</span>
-                  <span className="font-medium">{detailTherapist?.name}</span>
-                </div>
+                {isAdmin && detailTherapist && (
+                  <div className="flex items-center justify-between rounded-lg bg-muted/40 px-3 py-2">
+                    <span className="text-muted-foreground">치료사</span>
+                    <span className="font-medium">{detailTherapist.name}</span>
+                  </div>
+                )}
                 <div className="flex items-center justify-between rounded-lg bg-muted/40 px-3 py-2">
                   <span className="text-muted-foreground">세션 시간</span>
                   <span className="font-medium">{detailSession.duration}분</span>
