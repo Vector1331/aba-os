@@ -231,7 +231,7 @@ export function SessionScheduler() {
                       </span>
                       {daySessions.length > 0 && (
                         <div className="flex flex-col gap-0.5 mt-0.5 flex-1">
-                          {daySessions.slice(0, 2).map(s => renderSessionBadge(s, true))}
+                          {daySessions.slice(0, 2).map(s => renderSessionBadge(s))}
                           {daySessions.length > 2 && (
                             <span className="text-[9px] text-muted-foreground text-center">+{daySessions.length - 2}</span>
                           )}
