@@ -1,7 +1,6 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
@@ -12,6 +11,12 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import {
   LineChart,
   Line,
   BarChart,
@@ -21,13 +26,13 @@ import {
   XAxis,
   YAxis,
   CartesianGrid,
-  Tooltip,
+  Tooltip as RechartsTooltip,
   ResponsiveContainer,
   Legend,
 } from 'recharts';
-import type { Goal, Session } from '@/data/mockData';
+import type { Goal, Session, Trial } from '@/data/mockData';
 import { promptLevelLabels } from '@/data/mockData';
-import { TrendingUp, TrendingDown, Minus, AlertTriangle, Lightbulb, BarChart3, GripVertical, Calendar } from 'lucide-react';
+import { TrendingUp, TrendingDown, Minus, AlertTriangle, Lightbulb, BarChart3, GripVertical } from 'lucide-react';
 import { useApp } from '@/context/AppContext';
 import { ParentExplainer } from '@/components/ParentExplainer';
 import { DataSyncHint } from '@/components/DataSyncHint';
@@ -52,7 +57,7 @@ interface AnalyticsTabProps {
   goals: Goal[];
 }
 
-const COLORS = ['#0ea5e9', '#14b8a6', '#f59e0b', '#8b5cf6', '#ec4899'];
+const COLORS = ['#0ea5e9', '#14b8a6', '#f59e0b', '#8b5cf6', '#ec4899', '#ef4444', '#22c55e', '#6366f1'];
 
 type ChartType = 'line' | 'bar' | 'area';
 type DateRange = '7' | '30' | '90' | 'all' | 'custom';
@@ -84,16 +89,92 @@ function SortableSection({ id, children }: SortableSectionProps) {
   );
 }
 
+// Session detail popup content
+function SessionDetailContent({ session, goals }: { session: Session; goals: Goal[] }) {
+  const trialsByProgram = useMemo(() => {
+    const map = new Map<string, Trial[]>();
+    session.trialRecords.forEach(t => {
+      const arr = map.get(t.programId) || [];
+      arr.push(t);
+      map.set(t.programId, arr);
+    });
+    return map;
+  }, [session]);
+
+  return (
+    <div className="space-y-4 max-h-[60vh] overflow-y-auto">
+      <div className="flex items-center gap-3 text-sm text-muted-foreground">
+        <span>{new Date(session.date).toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric' })}</span>
+        <span>·</span>
+        <span>{session.duration}분</span>
+      </div>
+      {session.notes && <p className="text-sm bg-muted/50 rounded-lg p-3">{session.notes}</p>}
+
+      {Array.from(trialsByProgram.entries()).map(([programId, trials]) => {
+        const goal = goals.find(g => g.id === programId);
+        if (!goal) return null;
+        const correct = trials.filter(t => t.result === 'correct').length;
+        const rate = Math.round((correct / trials.length) * 100);
+        const avgPrompt = trials.reduce((a, t) => a + t.promptLevel, 0) / trials.length;
+        const problems = trials.filter(t => t.problemBehavior).length;
+
+        return (
+          <Card key={programId} className="border-border/60">
+            <CardContent className="p-4 space-y-3">
+              <div className="flex items-center justify-between">
+                <p className="font-medium text-sm">{goal.title}</p>
+                <Badge variant={rate >= 80 ? 'default' : rate >= 50 ? 'secondary' : 'destructive'} className="text-xs">
+                  {rate}%
+                </Badge>
+              </div>
+              <div className="grid grid-cols-3 gap-2 text-xs text-muted-foreground">
+                <div>시행: <span className="text-foreground font-medium">{trials.length}회</span></div>
+                <div>촉진: <span className="text-foreground font-medium">{promptLevelLabels[Math.round(avgPrompt)]}</span></div>
+                <div>문제행동: <span className={`font-medium ${problems > 0 ? 'text-destructive' : 'text-foreground'}`}>{problems}회</span></div>
+              </div>
+              <div className="flex flex-wrap gap-1">
+                {trials.map((trial, i) => (
+                  <div
+                    key={trial.id}
+                    className={`w-6 h-6 rounded text-xs flex items-center justify-center font-medium ${
+                      trial.result === 'correct'
+                        ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'
+                        : trial.result === 'incorrect'
+                        ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
+                        : 'bg-muted text-muted-foreground'
+                    }`}
+                    title={`${trial.stimulus} → ${trial.result} (${promptLevelLabels[trial.promptLevel]})`}
+                  >
+                    {trial.result === 'correct' ? '✓' : trial.result === 'incorrect' ? '✗' : '—'}
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        );
+      })}
+    </div>
+  );
+}
+
 export function AnalyticsTab({ sessions, goals }: AnalyticsTabProps) {
   const { role } = useApp();
   const [chartType, setChartType] = useState<ChartType>('line');
   const [dateRange, setDateRange] = useState<DateRange>('all');
   const [customStart, setCustomStart] = useState('');
   const [customEnd, setCustomEnd] = useState('');
-  const [sectionOrder, setSectionOrder] = useState(['successRate', 'promptLevel', 'sessionStatus', 'insights']);
+  const [sectionOrder, setSectionOrder] = useState(['successRate', 'sessionStatus', 'insights']);
   const [selectedGoalId, setSelectedGoalId] = useState<string | null>(null);
+  const [selectedSession, setSelectedSession] = useState<Session | null>(null);
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 8 } }));
+
+  // Only STOs that have actual trial data
+  const practicedSTOs = useMemo(() => {
+    const programIdsWithTrials = new Set<string>();
+    sessions.forEach(s => s.trialRecords.forEach(t => programIdsWithTrials.add(t.programId)));
+    return goals.filter(g => g.objectiveType === 'STO' && programIdsWithTrials.has(g.id));
+  }, [sessions, goals]);
 
   // Filter sessions by date range
   const filteredSessions = useMemo(() => {
@@ -117,35 +198,26 @@ export function AnalyticsTab({ sessions, goals }: AnalyticsTabProps) {
     });
   }, [sessions, dateRange, customStart, customEnd]);
 
-  // Success rate data
+  // Success rate data - only practiced STOs
   const successRateData = useMemo(() => {
     const sorted = [...filteredSessions].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
     return sorted.map((session) => {
       const dp: Record<string, string | number> = {
         date: new Date(session.date).toLocaleDateString('ko-KR', { month: 'short', day: 'numeric' }),
+        _sessionId: session.id as any,
       };
-      session.trials.forEach((trial) => {
-        const goal = goals.find((g) => g.id === trial.goalId);
-        if (goal) dp[goal.title] = Math.round((trial.successes / trial.trials) * 100);
+      practicedSTOs.forEach((goal) => {
+        const trials = session.trialRecords.filter(t => t.programId === goal.id);
+        if (trials.length > 0) {
+          const correct = trials.filter(t => t.result === 'correct').length;
+          dp[goal.title] = Math.round((correct / trials.length) * 100);
+        }
       });
       return dp;
     });
-  }, [filteredSessions, goals]);
+  }, [filteredSessions, practicedSTOs]);
 
-  // Prompt level data
-  const promptLevelData = useMemo(() => {
-    const sorted = [...filteredSessions].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-    return sorted.map((session) => {
-      const dp: Record<string, string | number> = {
-        date: new Date(session.date).toLocaleDateString('ko-KR', { month: 'short', day: 'numeric' }),
-      };
-      session.trials.forEach((trial) => {
-        const goal = goals.find((g) => g.id === trial.goalId);
-        if (goal) dp[goal.title] = trial.promptLevel;
-      });
-      return dp;
-    });
-  }, [filteredSessions, goals]);
+  const displayGoals = selectedGoalId ? practicedSTOs.filter(g => g.id === selectedGoalId) : practicedSTOs;
 
   // Insights
   const insights = useMemo(() => {
@@ -155,14 +227,17 @@ export function AnalyticsTab({ sessions, goals }: AnalyticsTabProps) {
     const older = sorted.slice(4, 8);
     const result: { type: 'success' | 'warning' | 'info'; message: string; detail?: string }[] = [];
 
-    goals.forEach((goal) => {
-      const recentTrials = recent.flatMap(s => s.trials.filter(t => t.goalId === goal.id));
-      const olderTrials = older.flatMap(s => s.trials.filter(t => t.goalId === goal.id));
+    practicedSTOs.forEach((goal) => {
+      const recentTrials = recent.flatMap(s => s.trialRecords.filter(t => t.programId === goal.id));
+      const olderTrials = older.flatMap(s => s.trialRecords.filter(t => t.programId === goal.id));
       if (recentTrials.length < 2) return;
 
-      const recentRate = recentTrials.reduce((a, t) => a + t.successes, 0) / recentTrials.reduce((a, t) => a + t.trials, 0) * 100;
+      const recentCorrect = recentTrials.filter(t => t.result === 'correct').length;
+      const recentRate = (recentCorrect / recentTrials.length) * 100;
+
       if (olderTrials.length >= 2) {
-        const olderRate = olderTrials.reduce((a, t) => a + t.successes, 0) / olderTrials.reduce((a, t) => a + t.trials, 0) * 100;
+        const olderCorrect = olderTrials.filter(t => t.result === 'correct').length;
+        const olderRate = (olderCorrect / olderTrials.length) * 100;
         const change = recentRate - olderRate;
         if (change > 10) result.push({ type: 'success', message: `${goal.title}: 성공률 ${Math.round(olderRate)}% → ${Math.round(recentRate)}%`, detail: `+${Math.round(change)}%p 향상` });
         else if (change < -10) result.push({ type: 'warning', message: `${goal.title}: 성공률 ${Math.round(olderRate)}% → ${Math.round(recentRate)}%`, detail: `${Math.round(change)}%p 하락 · 전략 조정 필요` });
@@ -173,42 +248,42 @@ export function AnalyticsTab({ sessions, goals }: AnalyticsTabProps) {
           result.push({ type: 'info', message: `${goal.title}: 촉진 수준 감소`, detail: `${promptLevelLabels[Math.round(olderAvgPrompt)]} → ${promptLevelLabels[Math.round(recentAvgPrompt)]} · 독립성 향상 중` });
         }
       }
-      if (recentRate >= 80 && recentTrials.every(t => t.promptLevel <= 1)) {
-        result.push({ type: 'success', message: `${goal.title}: 마스터리 기준 근접`, detail: `성공률 ${Math.round(recentRate)}% · 촉진 수준 낮음` });
+      if (recentRate >= 80) {
+        result.push({ type: 'success', message: `${goal.title}: 마스터리 기준 근접`, detail: `성공률 ${Math.round(recentRate)}%` });
       }
-      const problems = recentTrials.reduce((a, t) => a + t.problemBehaviorCount, 0);
+      const problems = recentTrials.filter(t => t.problemBehavior).length;
       if (problems > 4) result.push({ type: 'warning', message: `${goal.title}: 문제행동 발생`, detail: `최근 ${problems}회 · 행동 관리 전략 검토 필요` });
     });
     return result.slice(0, 5);
-  }, [filteredSessions, goals]);
+  }, [filteredSessions, practicedSTOs]);
 
-  // Goal summary
+  // Goal summary - only practiced STOs
   const goalSummary = useMemo(() => {
-    return goals.filter(g => g.status === 'active').map((goal) => {
-      const allTrials = filteredSessions.flatMap(s => s.trials.filter(t => t.goalId === goal.id));
-      if (allTrials.length === 0) return null;
-      const sortedS = [...filteredSessions].filter(s => s.trials.some(t => t.goalId === goal.id)).sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-      const first = sortedS[0]?.trials.filter(t => t.goalId === goal.id) || [];
-      const last = sortedS[sortedS.length - 1]?.trials.filter(t => t.goalId === goal.id) || [];
-      const firstRate = first.length > 0 ? (first.reduce((a, t) => a + t.successes, 0) / first.reduce((a, t) => a + t.trials, 0)) * 100 : 0;
-      const lastRate = last.length > 0 ? (last.reduce((a, t) => a + t.successes, 0) / last.reduce((a, t) => a + t.trials, 0)) * 100 : 0;
-      const firstPrompt = first.length > 0 ? first.reduce((a, t) => a + t.promptLevel, 0) / first.length : 0;
-      const lastPrompt = last.length > 0 ? last.reduce((a, t) => a + t.promptLevel, 0) / last.length : 0;
+    return practicedSTOs.filter(g => g.status === 'active').map((goal) => {
+      const sessionsWithGoal = filteredSessions.filter(s => s.trialRecords.some(t => t.programId === goal.id));
+      if (sessionsWithGoal.length === 0) return null;
+      const sorted = [...sessionsWithGoal].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+      const firstTrials = sorted[0].trialRecords.filter(t => t.programId === goal.id);
+      const lastTrials = sorted[sorted.length - 1].trialRecords.filter(t => t.programId === goal.id);
+      const firstRate = firstTrials.length > 0 ? (firstTrials.filter(t => t.result === 'correct').length / firstTrials.length) * 100 : 0;
+      const lastRate = lastTrials.length > 0 ? (lastTrials.filter(t => t.result === 'correct').length / lastTrials.length) * 100 : 0;
       return {
         goal,
         firstRate: Math.round(firstRate),
         lastRate: Math.round(lastRate),
-        firstPrompt: Math.round(firstPrompt * 10) / 10,
-        lastPrompt: Math.round(lastPrompt * 10) / 10,
         rateTrend: lastRate > firstRate + 5 ? 'up' : lastRate < firstRate - 5 ? 'down' : 'stable',
-        promptTrend: lastPrompt < firstPrompt - 0.3 ? 'up' : lastPrompt > firstPrompt + 0.3 ? 'down' : 'stable',
-        sessionCount: sortedS.length,
+        sessionCount: sorted.length,
       };
-    }).filter(Boolean) as NonNullable<any>[];
-  }, [filteredSessions, goals]);
+    }).filter(Boolean) as any[];
+  }, [filteredSessions, practicedSTOs]);
 
-  const activeGoals = goals.filter(g => g.status === 'active');
-  const displayGoals = selectedGoalId ? activeGoals.filter(g => g.id === selectedGoalId) : activeGoals;
+  const handleChartClick = useCallback((data: any) => {
+    if (data?.activePayload?.[0]?.payload?._sessionId) {
+      const sessionId = data.activePayload[0].payload._sessionId;
+      const session = sessions.find(s => s.id === sessionId);
+      if (session) setSelectedSession(session);
+    }
+  }, [sessions]);
 
   if (sessions.length === 0) {
     return (
@@ -241,45 +316,65 @@ export function AnalyticsTab({ sessions, goals }: AnalyticsTabProps) {
     }
   };
 
-  const renderChart = (data: Record<string, string | number>[], yDomain: [number, number], yFormatter: (v: number) => string, tooltipFormatter: (v: number) => [string, string]) => {
-    const chartProps = {
+  // Custom tooltip for charts
+  const CustomTooltip = ({ active, payload, label }: any) => {
+    if (!active || !payload?.length) return null;
+    return (
+      <div className="bg-card border border-border rounded-lg p-3 shadow-lg text-sm">
+        <p className="font-medium mb-1.5">{label}</p>
+        {payload.map((entry: any, i: number) => (
+          <div key={i} className="flex items-center gap-2 py-0.5">
+            <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: entry.color }} />
+            <span className="text-muted-foreground">{entry.name}:</span>
+            <span className="font-semibold">{entry.value}%</span>
+          </div>
+        ))}
+        <p className="text-xs text-muted-foreground mt-1.5 border-t border-border pt-1.5">클릭하여 세션 상세 보기</p>
+      </div>
+    );
+  };
+
+  const renderChart = (data: Record<string, string | number>[]) => {
+    const commonProps = {
       data,
-      children: (
-        <>
-          <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-          <XAxis dataKey="date" tick={{ fontSize: 12 }} stroke="hsl(var(--muted-foreground))" />
-          <YAxis domain={yDomain} tick={{ fontSize: 12 }} stroke="hsl(var(--muted-foreground))" tickFormatter={yFormatter} />
-          <Tooltip contentStyle={{ backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: '8px' }} formatter={tooltipFormatter} />
-          <Legend />
-        </>
-      ),
+      onClick: handleChartClick,
+      className: 'cursor-pointer',
     };
+    const commonChildren = (
+      <>
+        <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+        <XAxis dataKey="date" tick={{ fontSize: 12 }} stroke="hsl(var(--muted-foreground))" />
+        <YAxis domain={[0, 100]} tick={{ fontSize: 12 }} stroke="hsl(var(--muted-foreground))" tickFormatter={(v) => `${v}%`} />
+        <RechartsTooltip content={<CustomTooltip />} />
+        <Legend />
+      </>
+    );
 
     if (chartType === 'bar') {
       return (
-        <BarChart data={data}>
-          {chartProps.children}
-          {displayGoals.map((goal, i) => (
-            <Bar key={goal.id} dataKey={goal.title} fill={COLORS[activeGoals.findIndex(g => g.id === goal.id) % COLORS.length]} />
+        <BarChart {...commonProps}>
+          {commonChildren}
+          {displayGoals.map((goal) => (
+            <Bar key={goal.id} dataKey={goal.title} fill={COLORS[practicedSTOs.findIndex(g => g.id === goal.id) % COLORS.length]} />
           ))}
         </BarChart>
       );
     }
     if (chartType === 'area') {
       return (
-        <AreaChart data={data}>
-          {chartProps.children}
-          {displayGoals.map((goal, i) => (
-            <Area key={goal.id} type="monotone" dataKey={goal.title} stroke={COLORS[activeGoals.findIndex(g => g.id === goal.id) % COLORS.length]} fill={COLORS[activeGoals.findIndex(g => g.id === goal.id) % COLORS.length]} fillOpacity={0.2} />
+        <AreaChart {...commonProps}>
+          {commonChildren}
+          {displayGoals.map((goal) => (
+            <Area key={goal.id} type="monotone" dataKey={goal.title} stroke={COLORS[practicedSTOs.findIndex(g => g.id === goal.id) % COLORS.length]} fill={COLORS[practicedSTOs.findIndex(g => g.id === goal.id) % COLORS.length]} fillOpacity={0.2} />
           ))}
         </AreaChart>
       );
     }
     return (
-      <LineChart data={data}>
-        {chartProps.children}
-        {displayGoals.map((goal, i) => (
-          <Line key={goal.id} type="monotone" dataKey={goal.title} stroke={COLORS[activeGoals.findIndex(g => g.id === goal.id) % COLORS.length]} strokeWidth={2} dot={{ r: 4 }} activeDot={{ r: 6 }} />
+      <LineChart {...commonProps}>
+        {commonChildren}
+        {displayGoals.map((goal) => (
+          <Line key={goal.id} type="monotone" dataKey={goal.title} stroke={COLORS[practicedSTOs.findIndex(g => g.id === goal.id) % COLORS.length]} strokeWidth={2} dot={{ r: 4 }} activeDot={{ r: 7, className: 'cursor-pointer' }} />
         ))}
       </LineChart>
     );
@@ -289,8 +384,9 @@ export function AnalyticsTab({ sessions, goals }: AnalyticsTabProps) {
     successRate: (
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">목표별 성공률 추이</CardTitle>
+          <CardTitle className="text-base">STO별 성공률 추이</CardTitle>
           {role === 'parent' && <p className="text-sm text-muted-foreground">그래프가 위로 올라갈수록 목표 달성이 잘 되고 있다는 의미입니다</p>}
+          <p className="text-xs text-muted-foreground">차트의 점을 클릭하면 해당 세션의 상세 결과를 확인할 수 있습니다</p>
           <div className="flex flex-wrap gap-2 pt-2">
             <Badge
               variant={selectedGoalId === null ? 'default' : 'outline'}
@@ -299,7 +395,7 @@ export function AnalyticsTab({ sessions, goals }: AnalyticsTabProps) {
             >
               전체
             </Badge>
-            {activeGoals.map((goal, i) => (
+            {practicedSTOs.map((goal, i) => (
               <Badge
                 key={goal.id}
                 variant={selectedGoalId === goal.id ? 'default' : 'outline'}
@@ -315,44 +411,7 @@ export function AnalyticsTab({ sessions, goals }: AnalyticsTabProps) {
         <CardContent>
           <div className="h-72">
             <ResponsiveContainer width="100%" height="100%">
-              {renderChart(successRateData, [0, 100], (v) => `${v}%`, (v: number) => [`${v}%`, ''])}
-            </ResponsiveContainer>
-          </div>
-        </CardContent>
-      </Card>
-    ),
-    promptLevel: (
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">목표별 촉진 수준 추이</CardTitle>
-          <p className="text-sm text-muted-foreground">
-            {role === 'parent' ? '촉진 수준이 낮아질수록 아이가 더 독립적으로 과제를 수행할 수 있다는 의미입니다' : `낮을수록 독립적 수행 (0: ${promptLevelLabels[0]}, 3: ${promptLevelLabels[3]})`}
-          </p>
-          <div className="flex flex-wrap gap-2 pt-2">
-            <Badge
-              variant={selectedGoalId === null ? 'default' : 'outline'}
-              className="cursor-pointer transition-colors"
-              onClick={() => setSelectedGoalId(null)}
-            >
-              전체
-            </Badge>
-            {activeGoals.map((goal, i) => (
-              <Badge
-                key={goal.id}
-                variant={selectedGoalId === goal.id ? 'default' : 'outline'}
-                className="cursor-pointer transition-colors"
-                style={selectedGoalId === goal.id ? { backgroundColor: COLORS[i % COLORS.length], borderColor: COLORS[i % COLORS.length] } : { borderColor: COLORS[i % COLORS.length], color: COLORS[i % COLORS.length] }}
-                onClick={() => setSelectedGoalId(selectedGoalId === goal.id ? null : goal.id)}
-              >
-                {goal.title}
-              </Badge>
-            ))}
-          </div>
-        </CardHeader>
-        <CardContent>
-          <div className="h-72">
-            <ResponsiveContainer width="100%" height="100%">
-              {renderChart(promptLevelData, [0, 3], (v) => promptLevelLabels[v] || '', (v: number) => [promptLevelLabels[v], ''])}
+              {renderChart(successRateData)}
             </ResponsiveContainer>
           </div>
         </CardContent>
@@ -360,7 +419,7 @@ export function AnalyticsTab({ sessions, goals }: AnalyticsTabProps) {
     ),
     sessionStatus: goalSummary.length > 0 ? (
       <div className="space-y-3">
-        <h3 className="text-base font-semibold pl-8">세션별 현황</h3>
+        <h3 className="text-base font-semibold pl-8">STO별 현황</h3>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {goalSummary.map((stat: any) => (
             <Card key={stat.goal.id}>
@@ -372,19 +431,11 @@ export function AnalyticsTab({ sessions, goals }: AnalyticsTabProps) {
                   </div>
                   {getTrendIcon(stat.rateTrend)}
                 </div>
-                <div className="grid grid-cols-2 gap-3 text-sm">
-                  <div>
-                    <p className="text-muted-foreground text-xs">성공률 변화</p>
-                    <p className="font-semibold">
-                      {stat.firstRate}% → <span className={stat.rateTrend === 'up' ? 'text-success' : stat.rateTrend === 'down' ? 'text-destructive' : ''}>{stat.lastRate}%</span>
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-muted-foreground text-xs">촉진 수준</p>
-                    <p className="font-semibold">
-                      {promptLevelLabels[Math.round(stat.firstPrompt)]} → <span className={stat.promptTrend === 'up' ? 'text-success' : stat.promptTrend === 'down' ? 'text-destructive' : ''}>{promptLevelLabels[Math.round(stat.lastPrompt)]}</span>
-                    </p>
-                  </div>
+                <div className="text-sm">
+                  <p className="text-muted-foreground text-xs">성공률 변화</p>
+                  <p className="font-semibold">
+                    {stat.firstRate}% → <span className={stat.rateTrend === 'up' ? 'text-success' : stat.rateTrend === 'down' ? 'text-destructive' : ''}>{stat.lastRate}%</span>
+                  </p>
                 </div>
                 <p className="text-xs text-muted-foreground mt-2">{stat.sessionCount}회 세션 기록</p>
               </CardContent>
@@ -428,16 +479,15 @@ export function AnalyticsTab({ sessions, goals }: AnalyticsTabProps) {
 
   return (
     <div className="space-y-6">
-      {/* Parent explainer */}
       {role === 'parent' && (
         <ParentExplainer
           title="분석 차트란?"
-          description="이 화면은 자녀의 치료 목표별 성공률과 독립성(촉진 수준) 변화를 시각적으로 보여줍니다."
+          description="이 화면은 자녀의 치료 목표별 성공률 변화를 시각적으로 보여줍니다."
         />
       )}
       <DataSyncHint />
 
-      {/* Controls: date range + chart type */}
+      {/* Controls */}
       <div className="flex flex-wrap items-end gap-4">
         <div className="space-y-1">
           <Label className="text-xs text-muted-foreground">기간 범위</Label>
@@ -499,6 +549,16 @@ export function AnalyticsTab({ sessions, goals }: AnalyticsTabProps) {
           })}
         </SortableContext>
       </DndContext>
+
+      {/* Session detail dialog */}
+      <Dialog open={!!selectedSession} onOpenChange={(open) => !open && setSelectedSession(null)}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>세션 상세 결과</DialogTitle>
+          </DialogHeader>
+          {selectedSession && <SessionDetailContent session={selectedSession} goals={goals} />}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
