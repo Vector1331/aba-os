@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { useApp } from '@/context/AppContext';
+import { getDomainLabel } from '@/data/mockData';
 import {
   addDays, subDays, startOfWeek, endOfWeek, startOfMonth, endOfMonth,
   format, isSameDay, isSameMonth, eachDayOfInterval, eachMonthOfInterval,
