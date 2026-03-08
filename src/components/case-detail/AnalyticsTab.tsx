@@ -609,19 +609,33 @@ export function AnalyticsTab({ sessions, goals }: AnalyticsTabProps) {
           {goalDetailStat && (() => {
             const stat = goalDetailStat;
             const change = stat.lastRate - stat.firstRate;
+            const promptLabels = ['독립 수행', '살짝 힌트', '말로 안내', '시범', '직접 도움'];
             const lines: string[] = [];
+
+            // 성공률 변화 해석
             if (stat.rateTrend === 'up') {
-              lines.push(`꾸준한 성장을 보이고 있습니다. 성공률이 ${stat.firstRate}%에서 ${stat.lastRate}%로 ${Math.abs(change)}%p 향상되었습니다.`);
-              if (stat.lastRate >= 80) lines.push('현재 목표 달성 기준에 근접해 있어, 곧 다음 단계로 넘어갈 수 있을 것으로 기대됩니다.');
-              else lines.push('이 추세가 유지되면 조만간 목표 달성이 가능할 것으로 보입니다.');
+              lines.push(`성공률이 ${stat.firstRate}%에서 ${stat.lastRate}%로 ${Math.abs(change)}%p 상승했습니다.`);
             } else if (stat.rateTrend === 'down') {
-              lines.push(`성공률이 ${stat.firstRate}%에서 ${stat.lastRate}%로 다소 낮아졌습니다.`);
-              lines.push('일시적인 변동일 수 있으며, 자극의 난이도를 조정하거나 동기부여 전략을 변경하여 다시 향상을 유도할 계획입니다.');
+              lines.push(`성공률이 ${stat.firstRate}%에서 ${stat.lastRate}%로 ${Math.abs(change)}%p 하락했습니다.`);
             } else {
-              lines.push(`${stat.lastRate}% 수준을 안정적으로 유지하고 있습니다.`);
-              lines.push('안정적인 수행은 학습이 내재화되고 있다는 좋은 신호입니다. 점진적으로 난이도를 높여볼 수 있습니다.');
+              lines.push(`성공률 ${stat.lastRate}%로 일정한 수준을 유지하고 있습니다.`);
             }
-            lines.push(`총 ${stat.sessionCount}회 세션에서 해당 활동을 진행했습니다.`);
+
+            // 촉진(도움) 수준 변화
+            if (stat.firstPrompt !== stat.lastPrompt) {
+              const promptDir = stat.lastPrompt < stat.firstPrompt ? '줄어들었습니다' : '늘어났습니다';
+              lines.push(`도움 수준이 "${promptLabels[Math.round(stat.firstPrompt)]}"에서 "${promptLabels[Math.round(stat.lastPrompt)]}"(으)로 ${promptDir}.`);
+            } else {
+              lines.push(`도움 수준은 "${promptLabels[Math.round(stat.avgPrompt)]}" 단계에서 유지되고 있습니다.`);
+            }
+
+            // 문제행동 기록
+            if (stat.totalProblems > 0) {
+              lines.push(`기간 내 문제행동이 총 ${stat.totalProblems}회 관찰되었습니다.`);
+            }
+
+            // 시행 횟수
+            lines.push(`총 ${stat.sessionCount}회 세션, ${stat.totalTrialCount}회 시행 기록 기준입니다.`);
 
             return (
               <div className="space-y-4">
