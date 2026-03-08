@@ -1,11 +1,10 @@
 import { useState, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Calendar, Target, BarChart3, FileText, User, Plus } from 'lucide-react';
+import { ArrowLeft, Calendar, BarChart3, FileText, User, Phone } from 'lucide-react';
 import { useApp } from '@/context/AppContext';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { GoalsTab } from '@/components/case-detail/GoalsTab';
 import { SessionsTab } from '@/components/case-detail/SessionsTab';
 import { AnalyticsTab } from '@/components/case-detail/AnalyticsTab';
@@ -22,18 +21,6 @@ export default function CaseDetail() {
   const sessions = getSessionsByChildId(id || '');
   const reports = getReportsByChildId(id || '');
   const therapist = child ? getTherapistById(child.therapistId) : undefined;
-
-  const stats = useMemo(() => {
-    if (sessions.length === 0) return { avgSuccessRate: 0, totalSessions: 0, activeGoals: 0 };
-    const allTrials = sessions.flatMap((s) => s.trials);
-    const totalTrials = allTrials.reduce((acc, t) => acc + t.trials, 0);
-    const totalSuccesses = allTrials.reduce((acc, t) => acc + t.successes, 0);
-    return {
-      avgSuccessRate: totalTrials > 0 ? Math.round((totalSuccesses / totalTrials) * 100) : 0,
-      totalSessions: sessions.length,
-      activeGoals: goals.filter((g) => g.status === 'active').length,
-    };
-  }, [sessions, goals]);
 
   if (!child) {
     return (
@@ -61,7 +48,6 @@ export default function CaseDetail() {
         </div>
       </div>
 
-      {/* Tabs - merged overview+goals, removed goals tab */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
         <TabsList className="grid w-full grid-cols-4 lg:w-auto lg:inline-grid">
           <TabsTrigger value="overview" className="gap-2">
@@ -82,154 +68,76 @@ export default function CaseDetail() {
           </TabsTrigger>
         </TabsList>
 
-        {/* Overview Tab - merged with Goals */}
+        {/* Overview Tab */}
         <TabsContent value="overview" className="space-y-6">
-          {/* Quick Stats */}
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            <Card className="stat-card">
-              <CardContent className="p-0">
-                <div className="flex items-center gap-3">
-                  <div className="rounded-xl bg-primary/10 p-3">
-                    <Calendar className="h-5 w-5 text-primary" />
-                  </div>
-                  <div>
-                    <p className="text-2xl font-bold">{stats.totalSessions}</p>
-                    <p className="text-sm text-muted-foreground">총 세션</p>
-                  </div>
+          {/* Compact Child + Guardian + Therapist Info */}
+          <div className="rounded-xl border border-border bg-card p-4">
+            <div className="grid gap-4 sm:grid-cols-3">
+              {/* Child Info */}
+              <div className="space-y-1">
+                <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">아동 정보</h3>
+                <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-sm">
+                  <span className="text-muted-foreground">나이</span>
+                  <span className="font-medium">{child.age}세</span>
+                  <span className="text-muted-foreground">생년월일</span>
+                  <span className="font-medium">{new Date(child.birthDate).toLocaleDateString('ko-KR')}</span>
+                  <span className="text-muted-foreground">시작일</span>
+                  <span className="font-medium">{new Date(child.startDate).toLocaleDateString('ko-KR')}</span>
+                  <span className="text-muted-foreground">최근 세션</span>
+                  <span className="font-medium">{child.lastSessionDate ? new Date(child.lastSessionDate).toLocaleDateString('ko-KR') : '-'}</span>
                 </div>
-              </CardContent>
-            </Card>
-            <Card className="stat-card">
-              <CardContent className="p-0">
-                <div className="flex items-center gap-3">
-                  <div className="rounded-xl bg-accent/10 p-3">
-                    <Target className="h-5 w-5 text-accent" />
-                  </div>
-                  <div>
-                    <p className="text-2xl font-bold">{stats.activeGoals}</p>
-                    <p className="text-sm text-muted-foreground">활성 목표</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-            <Card className="stat-card">
-              <CardContent className="p-0">
-                <div className="flex items-center gap-3">
-                  <div className="rounded-xl bg-success/10 p-3">
-                    <BarChart3 className="h-5 w-5 text-success" />
-                  </div>
-                  <div>
-                    <p className="text-2xl font-bold">{stats.avgSuccessRate}%</p>
-                    <p className="text-sm text-muted-foreground">평균 성공률</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-            <Card className="stat-card">
-              <CardContent className="p-0">
-                <div className="flex items-center gap-3">
-                  <div className="rounded-xl bg-primary/10 p-3">
-                    <User className="h-5 w-5 text-primary" />
-                  </div>
-                  <div>
-                    <p className="text-2xl font-bold">
-                      {child.estimatedDevAge
-                        ? `${Math.floor(child.estimatedDevAge / 12)}세 ${child.estimatedDevAge % 12}개월`
-                        : '-'}
-                    </p>
-                    <p className="text-sm text-muted-foreground">발달 추정 연령</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
+                {child.concern && (
+                  <p className="text-xs text-muted-foreground pt-1">📌 {child.concern}</p>
+                )}
+              </div>
 
-          {/* Child Info */}
-          <div className="grid gap-6 lg:grid-cols-2">
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-base">아동 정보</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <p className="text-sm text-muted-foreground">나이</p>
-                    <p className="font-medium">{child.age}세</p>
+              {/* Guardian */}
+              <div className="space-y-1">
+                <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">보호자</h3>
+                <div className="flex items-center gap-2">
+                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-muted text-xs font-semibold">
+                    {child.guardianName?.charAt(0)}
                   </div>
                   <div>
-                    <p className="text-sm text-muted-foreground">생년월일</p>
-                    <p className="font-medium">{new Date(child.birthDate).toLocaleDateString('ko-KR')}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground">시작일</p>
-                    <p className="font-medium">{new Date(child.startDate).toLocaleDateString('ko-KR')}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground">최근 세션</p>
-                    <p className="font-medium">
-                      {child.lastSessionDate
-                        ? new Date(child.lastSessionDate).toLocaleDateString('ko-KR')
-                        : '-'}
-                    </p>
+                    <p className="text-sm font-medium">{child.guardianName} <span className="text-muted-foreground font-normal">({child.guardianRelation})</span></p>
+                    <p className="text-xs text-muted-foreground flex items-center gap-1"><Phone className="h-3 w-3" />{child.guardianPhone}</p>
                   </div>
                 </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">주요 관심사</p>
-                  <p className="font-medium">{child.concern}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">진단명</p>
-                  <p className="font-medium">{child.diagnosis}</p>
-                </div>
-              </CardContent>
-            </Card>
+              </div>
 
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-base">보호자 및 담당 치료사</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div>
-                  <p className="text-sm text-muted-foreground">보호자</p>
-                  <p className="font-medium">
-                    {child.guardianName} ({child.guardianRelation})
-                  </p>
-                  <p className="text-sm text-muted-foreground">{child.guardianPhone}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">담당 치료사</p>
-                  {therapist && (
-                    <>
-                      <p className="font-medium">{therapist.name}</p>
-                      <p className="text-sm text-muted-foreground">{therapist.specialization}</p>
-                    </>
-                  )}
-                </div>
-                {child.notes && (
-                  <div>
-                    <p className="text-sm text-muted-foreground">메모</p>
-                    <p className="font-medium">{child.notes}</p>
+              {/* Therapist */}
+              <div className="space-y-1">
+                <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">담당 치료사</h3>
+                {therapist && (
+                  <div className="flex items-center gap-2">
+                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-semibold text-primary">
+                      {therapist.name.charAt(0)}
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium">{therapist.name}</p>
+                      <p className="text-xs text-muted-foreground">{therapist.specialization}</p>
+                    </div>
                   </div>
                 )}
-              </CardContent>
-            </Card>
+              </div>
+            </div>
+            {child.notes && (
+              <p className="text-xs text-muted-foreground mt-3 pt-3 border-t border-border/50">📝 {child.notes}</p>
+            )}
           </div>
 
-          {/* Goals Section - integrated into overview */}
+          {/* Goals Section - takes up most of the space */}
           <GoalsTab childId={id || ''} goals={goals} />
         </TabsContent>
 
-        {/* Sessions Tab */}
         <TabsContent value="sessions">
           <SessionsTab childId={id || ''} sessions={sessions} goals={goals} />
         </TabsContent>
 
-        {/* Analytics Tab */}
         <TabsContent value="analytics">
           <AnalyticsTab sessions={sessions} goals={goals} />
         </TabsContent>
 
-        {/* Reports Tab */}
         <TabsContent value="reports">
           <ReportsTab childId={id || ''} child={child} reports={reports} sessions={sessions} goals={goals} />
         </TabsContent>
