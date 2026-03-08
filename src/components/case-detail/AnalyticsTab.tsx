@@ -166,6 +166,7 @@ export function AnalyticsTab({ sessions, goals }: AnalyticsTabProps) {
   const [sectionOrder, setSectionOrder] = useState(['successRate', 'sessionStatus', 'insights']);
   const [selectedGoalId, setSelectedGoalId] = useState<string | null>(null);
   const [selectedSession, setSelectedSession] = useState<Session | null>(null);
+  const [goalDetailStat, setGoalDetailStat] = useState<any | null>(null);
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 8 } }));
 
