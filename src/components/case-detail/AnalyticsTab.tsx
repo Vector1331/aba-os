@@ -638,6 +638,8 @@ export function AnalyticsTab({ sessions, goals }: AnalyticsTabProps) {
               </div>
             );
           })()}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
