@@ -322,9 +322,7 @@ export function SessionScheduler() {
                               {sessionsAtHour.map(session => {
                                 const child = children.find(c => c.id === session.childId);
                                 const therapist = therapists.find(t => t.id === session.therapistId);
-                                const totalTrials = session.trials.reduce((a, t) => a + t.trials, 0);
-                                const totalSuccesses = session.trials.reduce((a, t) => a + t.successes, 0);
-                                const avgRate = totalTrials > 0 ? Math.round((totalSuccesses / totalTrials) * 100) : 0;
+                                const domains = getSessionDomains(session);
 
                                 return (
                                   <button
@@ -332,21 +330,12 @@ export function SessionScheduler() {
                                     onClick={() => setSelectedSession(session.id)}
                                     className="w-full text-left rounded-lg bg-primary/10 border border-primary/20 p-2 hover:bg-primary/15 transition-colors"
                                   >
-                                    <div className="flex items-center justify-between">
-                                      <div>
-                                        <p className="text-sm font-medium text-foreground">{child?.name}</p>
-                                        <p className="text-[11px] text-muted-foreground">
-                                          {therapist?.name} · {session.duration}분
-                                        </p>
-                                      </div>
-                                      <Badge className={cn('text-xs',
-                                        avgRate >= 70 ? 'bg-success/10 text-success border-0' :
-                                        avgRate >= 50 ? 'bg-warning/10 text-warning border-0' :
-                                        'bg-destructive/10 text-destructive border-0'
-                                      )}>
-                                        {avgRate}%
-                                      </Badge>
-                                    </div>
+                                    <p className="text-sm font-medium text-foreground">{child?.name}</p>
+                                    <p className="text-[11px] text-muted-foreground">
+                                      {session.duration}분
+                                      {domains.length > 0 && ` · ${domains.join(', ')}`}
+                                      {isAdmin && therapist && ` · ${therapist.name}`}
+                                    </p>
                                   </button>
                                 );
                               })}
