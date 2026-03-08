@@ -340,7 +340,7 @@ export function GoalsTab({ childId, goals }: GoalsTabProps) {
                 )}
                 {isExpanded && childSTOs.length === 0 && (
                   <div className="border-t p-3 pl-12 text-xs text-muted-foreground">
-                    등록된 단기목표(STO)가 없습니다
+                    등록된 단기목표가 없습니다
                   </div>
                 )}
               </Card>
