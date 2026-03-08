@@ -604,7 +604,7 @@ ${improvingGoals.length > 0 ? `• ${improvingGoals.map(g => g.goal.title).join(
                 )}
 
                 <div className="rounded-lg bg-warning/5 border border-warning/20 p-3">
-                  <p className="text-xs text-muted-foreground">※ 본 리포트는 진단이나 처방이 아닌, 입력된 치료 기록을 기반으로 한 관찰 요약입니다.</p>
+                  <p className="text-xs text-muted-foreground">※ 본 안내는 치료 세션에서 관찰된 내용을 정리한 것이며, 의학적 진단이나 처방은 아닙니다.</p>
                 </div>
               </CardContent>
             </Card>

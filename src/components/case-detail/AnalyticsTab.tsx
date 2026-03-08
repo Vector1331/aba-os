@@ -419,7 +419,7 @@ export function AnalyticsTab({ sessions, goals }: AnalyticsTabProps) {
     ),
     sessionStatus: goalSummary.length > 0 ? (
       <div className="space-y-3">
-        <h3 className="text-base font-semibold pl-8">STO별 현황</h3>
+        <h3 className="text-base font-semibold pl-8">단기목표별 현황</h3>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {goalSummary.map((stat: any) => (
             <Card key={stat.goal.id}>
