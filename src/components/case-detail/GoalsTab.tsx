@@ -214,7 +214,7 @@ export function GoalsTab({ childId, goals }: GoalsTabProps) {
                   {/* Parent LTO (for STO only) */}
                   {newGoal.objectiveType === 'STO' && availableLTOs.length > 0 && (
                     <div className="space-y-2">
-                      <Label>상위 장기목표 (LTO)</Label>
+                      <Label>상위 장기목표</Label>
                       <Select
                         value={newGoal.parentProgramId || ''}
                         onValueChange={(v) => setNewGoal({ ...newGoal, parentProgramId: v })}
