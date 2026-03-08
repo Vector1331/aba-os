@@ -174,8 +174,8 @@ export function GoalsTab({ childId, goals }: GoalsTabProps) {
                       >
                         <SelectTrigger><SelectValue /></SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="LTO">장기목표 (LTO)</SelectItem>
-                          <SelectItem value="STO">단기목표 (STO)</SelectItem>
+                          <SelectItem value="LTO">장기목표</SelectItem>
+                          <SelectItem value="STO">단기목표</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
