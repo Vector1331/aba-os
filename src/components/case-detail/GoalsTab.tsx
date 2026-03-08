@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react';
 import { Plus, ChevronDown, ChevronRight, Layers } from 'lucide-react';
 import { useApp } from '@/context/AppContext';
+import { Switch } from '@/components/ui/switch';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
