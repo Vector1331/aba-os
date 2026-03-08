@@ -653,7 +653,7 @@ export function AnalyticsTab({ sessions, goals }: AnalyticsTabProps) {
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <h4 className="text-sm font-semibold">추이 요약 및 의견</h4>
+                  <h4 className="text-sm font-semibold">변화 추이 해석</h4>
                   {lines.map((line, i) => (
                     <p key={i} className="text-sm text-muted-foreground leading-relaxed">{line}</p>
                   ))}
