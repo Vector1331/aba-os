@@ -419,28 +419,52 @@ export function AnalyticsTab({ sessions, goals }: AnalyticsTabProps) {
     ),
     sessionStatus: goalSummary.length > 0 ? (
       <div className="space-y-3">
-        <h3 className="text-base font-semibold pl-8">단기목표별 현황</h3>
+        <h3 className="text-base font-semibold pl-8">목표별 현황</h3>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {goalSummary.map((stat: any) => (
-            <Card key={stat.goal.id}>
-              <CardContent className="p-4">
-                <div className="flex items-start justify-between mb-3">
-                  <div>
-                    <p className="font-medium">{stat.goal.title}</p>
-                    <Badge variant="outline" className="text-xs mt-1">{stat.goal.category}</Badge>
+          {goalSummary.map((stat: any) => {
+            const change = stat.lastRate - stat.firstRate;
+            const generateSummary = () => {
+              const lines: string[] = [];
+              if (stat.rateTrend === 'up') {
+                lines.push(`${stat.goal.title} 활동에서 꾸준한 성장을 보이고 있습니다. 성공률이 ${stat.firstRate}%에서 ${stat.lastRate}%로 ${Math.abs(change)}%p 향상되었습니다.`);
+                if (stat.lastRate >= 80) lines.push('현재 목표 달성 기준에 근접해 있어, 곧 다음 단계로 넘어갈 수 있을 것으로 기대됩니다.');
+                else lines.push('이 추세가 유지되면 조만간 목표 달성이 가능할 것으로 보입니다.');
+              } else if (stat.rateTrend === 'down') {
+                lines.push(`${stat.goal.title} 활동에서 성공률이 ${stat.firstRate}%에서 ${stat.lastRate}%로 다소 낮아졌습니다.`);
+                lines.push('일시적인 변동일 수 있으며, 자극의 난이도를 조정하거나 동기부여 전략을 변경하여 다시 향상을 유도할 계획입니다.');
+              } else {
+                lines.push(`${stat.goal.title} 활동에서 ${stat.lastRate}% 수준을 안정적으로 유지하고 있습니다.`);
+                lines.push('안정적인 수행은 학습이 내재화되고 있다는 좋은 신호입니다. 점진적으로 난이도를 높여볼 수 있습니다.');
+              }
+              lines.push(`총 ${stat.sessionCount}회 세션에서 해당 활동을 진행했습니다.`);
+              return lines;
+            };
+
+            return (
+              <Card
+                key={stat.goal.id}
+                className="cursor-pointer hover:shadow-md transition-all"
+                onClick={() => setGoalDetailStat(stat)}
+              >
+                <CardContent className="p-4">
+                  <div className="flex items-start justify-between mb-3">
+                    <div>
+                      <p className="font-medium">{stat.goal.title}</p>
+                      <Badge variant="outline" className="text-xs mt-1">{stat.goal.category}</Badge>
+                    </div>
+                    {getTrendIcon(stat.rateTrend)}
                   </div>
-                  {getTrendIcon(stat.rateTrend)}
-                </div>
-                <div className="text-sm">
-                  <p className="text-muted-foreground text-xs">성공률 변화</p>
-                  <p className="font-semibold">
-                    {stat.firstRate}% → <span className={stat.rateTrend === 'up' ? 'text-success' : stat.rateTrend === 'down' ? 'text-destructive' : ''}>{stat.lastRate}%</span>
-                  </p>
-                </div>
-                <p className="text-xs text-muted-foreground mt-2">{stat.sessionCount}회 세션 기록</p>
-              </CardContent>
-            </Card>
-          ))}
+                  <div className="text-sm">
+                    <p className="text-muted-foreground text-xs">성공률 변화</p>
+                    <p className="font-semibold">
+                      {stat.firstRate}% → <span className={stat.rateTrend === 'up' ? 'text-success' : stat.rateTrend === 'down' ? 'text-destructive' : ''}>{stat.lastRate}%</span>
+                    </p>
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-2">{stat.sessionCount}회 세션 · 클릭하여 상세 보기</p>
+                </CardContent>
+              </Card>
+            );
+          })}
         </div>
       </div>
     ) : null,
