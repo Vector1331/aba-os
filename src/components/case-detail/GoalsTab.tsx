@@ -347,6 +347,15 @@ export function GoalsTab({ childId, goals }: GoalsTabProps) {
                             </div>
                           )}
                         </div>
+                        {canCreate && (
+                          <Switch
+                            checked={sto.status === 'active'}
+                            onCheckedChange={(checked) => {
+                              updateGoal(sto.id, { status: checked ? 'active' : 'paused' });
+                            }}
+                            className="scale-75 mt-1"
+                          />
+                        )}
                       </div>
                     ))}
                   </div>
