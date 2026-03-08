@@ -275,6 +275,32 @@ export function AnalyticsTab({ sessions, goals }: AnalyticsTabProps) {
       const firstPrompt = firstTrials.length > 0 ? firstTrials.reduce((a, t) => a + t.promptLevel, 0) / firstTrials.length : 0;
       const lastPrompt = lastTrials.length > 0 ? lastTrials.reduce((a, t) => a + t.promptLevel, 0) / lastTrials.length : 0;
       const totalTrialCount = allTrials.length;
+
+      // Per-session progression for narrative
+      const sessionProgression = sorted.map(s => {
+        const trials = s.trialRecords.filter(t => t.programId === goal.id);
+        const rate = trials.length > 0 ? Math.round((trials.filter(t => t.result === 'correct').length / trials.length) * 100) : 0;
+        const problems = trials.filter(t => t.problemBehavior).length;
+        const avgP = trials.length > 0 ? Math.round((trials.reduce((a, t) => a + t.promptLevel, 0) / trials.length) * 10) / 10 : 0;
+        return { date: s.date, rate, problems, avgPrompt: avgP, trialCount: trials.length };
+      });
+
+      // Find best/worst sessions
+      const bestSession = sessionProgression.reduce((best, s) => s.rate > best.rate ? s : best, sessionProgression[0]);
+      const worstSession = sessionProgression.reduce((worst, s) => s.rate < worst.rate ? s : worst, sessionProgression[0]);
+
+      // Detect notable jumps (>15%p change between consecutive sessions)
+      const notableChanges: { from: typeof sessionProgression[0]; to: typeof sessionProgression[0]; diff: number }[] = [];
+      for (let i = 1; i < sessionProgression.length; i++) {
+        const diff = sessionProgression[i].rate - sessionProgression[i - 1].rate;
+        if (Math.abs(diff) >= 15) {
+          notableChanges.push({ from: sessionProgression[i - 1], to: sessionProgression[i], diff });
+        }
+      }
+
+      // Sessions with problem behaviors
+      const problemSessions = sessionProgression.filter(s => s.problems > 0);
+
       return {
         goal,
         firstRate: Math.round(firstRate),
@@ -286,6 +312,11 @@ export function AnalyticsTab({ sessions, goals }: AnalyticsTabProps) {
         firstPrompt: Math.round(firstPrompt * 10) / 10,
         lastPrompt: Math.round(lastPrompt * 10) / 10,
         totalTrialCount,
+        sessionProgression,
+        bestSession,
+        worstSession,
+        notableChanges,
+        problemSessions,
       };
     }).filter(Boolean) as any[];
   }, [filteredSessions, practicedSTOs]);
