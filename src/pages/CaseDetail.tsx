@@ -81,7 +81,7 @@ export default function CaseDetail() {
                   <span className="font-medium">{new Date(child.birthDate).toLocaleDateString('ko-KR')}</span>
                   <span className="text-muted-foreground">진단</span>
                   <span className="font-medium">{child.diagnosis || '-'}</span>
-                  <span className="text-muted-foreground">시작일</span>
+                  <span className="text-muted-foreground">치료 시작</span>
                   <span className="font-medium">{new Date(child.startDate).toLocaleDateString('ko-KR')}</span>
                   <span className="text-muted-foreground">최근 세션</span>
                   <span className="font-medium">{child.lastSessionDate ? new Date(child.lastSessionDate).toLocaleDateString('ko-KR') : '-'}</span>
