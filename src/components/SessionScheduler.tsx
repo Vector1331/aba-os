@@ -373,27 +373,26 @@ export function SessionScheduler() {
                 <div>
                   <p className="font-semibold">{detailChild?.name}</p>
                   <p className="text-xs text-muted-foreground">
-                    {format(new Date(detailSession.date), 'yyyy년 M월 d일 (EEE)', { locale: ko })} · {detailTherapist?.name} · {detailSession.duration}분
+                    {format(new Date(detailSession.date), 'yyyy년 M월 d일 (EEE)', { locale: ko })}
                   </p>
                 </div>
               </div>
 
-              <div className="grid gap-2">
-                {detailSession.trials.map((trial, ti) => {
-                  const goal = goals.find(g => g.id === trial.goalId);
-                  const rate = trial.trials > 0 ? Math.round((trial.successes / trial.trials) * 100) : 0;
-                  return (
-                    <div key={ti} className="flex items-center justify-between rounded-lg bg-muted/40 px-3 py-2">
-                      <span className="text-sm font-medium truncate mr-2">{goal?.title || trial.goalId}</span>
-                      <span className={cn(
-                        'text-sm font-semibold whitespace-nowrap',
-                        rate >= 70 ? 'text-success' : rate >= 50 ? 'text-warning' : 'text-destructive'
-                      )}>
-                        {trial.successes}/{trial.trials} ({rate}%)
-                      </span>
-                    </div>
-                  );
-                })}
+              <div className="grid gap-2 text-sm">
+                <div className="flex items-center justify-between rounded-lg bg-muted/40 px-3 py-2">
+                  <span className="text-muted-foreground">치료사</span>
+                  <span className="font-medium">{detailTherapist?.name}</span>
+                </div>
+                <div className="flex items-center justify-between rounded-lg bg-muted/40 px-3 py-2">
+                  <span className="text-muted-foreground">세션 시간</span>
+                  <span className="font-medium">{detailSession.duration}분</span>
+                </div>
+                {getSessionDomains(detailSession).length > 0 && (
+                  <div className="flex items-center justify-between rounded-lg bg-muted/40 px-3 py-2">
+                    <span className="text-muted-foreground">영역</span>
+                    <span className="font-medium">{getSessionDomains(detailSession).join(', ')}</span>
+                  </div>
+                )}
               </div>
 
               {detailSession.notes && (
