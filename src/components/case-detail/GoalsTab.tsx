@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react';
 import { Plus, ChevronDown, ChevronRight, Layers } from 'lucide-react';
 import { useApp } from '@/context/AppContext';
+import { Switch } from '@/components/ui/switch';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -30,7 +31,7 @@ interface GoalsTabProps {
 }
 
 export function GoalsTab({ childId, goals }: GoalsTabProps) {
-  const { addGoal, role } = useApp();
+  const { addGoal, updateGoal, role } = useApp();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedLevel, setSelectedLevel] = useState<VBMAPPLevel | 'all'>('all');
   const [expandedLTOs, setExpandedLTOs] = useState<Set<string>>(new Set());
@@ -308,8 +309,20 @@ export function GoalsTab({ childId, goals }: GoalsTabProps) {
                     <h3 className="font-semibold text-sm">{lto.title}</h3>
                     <p className="text-xs text-muted-foreground truncate">{lto.description}</p>
                   </div>
-                  <div className="text-xs text-muted-foreground whitespace-nowrap">
-                    단기 {activeSTOs}/{childSTOs.length}
+                  <div className="flex items-center gap-3 whitespace-nowrap">
+                    <div className="text-xs text-muted-foreground">
+                      단기 {activeSTOs}/{childSTOs.length}
+                    </div>
+                    {canCreate && (
+                      <Switch
+                        checked={lto.status === 'active'}
+                        onCheckedChange={(checked) => {
+                          updateGoal(lto.id, { status: checked ? 'active' : 'paused' });
+                        }}
+                        onClick={(e) => e.stopPropagation()}
+                        className="scale-75"
+                      />
+                    )}
                   </div>
                 </div>
 
@@ -334,6 +347,15 @@ export function GoalsTab({ childId, goals }: GoalsTabProps) {
                             </div>
                           )}
                         </div>
+                        {canCreate && (
+                          <Switch
+                            checked={sto.status === 'active'}
+                            onCheckedChange={(checked) => {
+                              updateGoal(sto.id, { status: checked ? 'active' : 'paused' });
+                            }}
+                            className="scale-75 mt-1"
+                          />
+                        )}
                       </div>
                     ))}
                   </div>
