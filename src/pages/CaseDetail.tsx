@@ -69,9 +69,9 @@ export default function CaseDetail() {
 
         {/* Overview Tab */}
         <TabsContent value="overview" className="space-y-6">
-          <div className="rounded-xl border border-border bg-card p-5">
+          <div className="rounded-xl border border-border bg-card p-5 space-y-4">
             <div className="grid gap-6 sm:grid-cols-2">
-              {/* Child Info */}
+              {/* 아동 정보 */}
               <div className="space-y-3">
                 <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">아동 정보</h3>
                 <div className="grid grid-cols-[auto_1fr] gap-x-6 gap-y-2 text-sm">
@@ -79,19 +79,16 @@ export default function CaseDetail() {
                   <span className="font-medium">{child.age}세</span>
                   <span className="text-muted-foreground">생년월일</span>
                   <span className="font-medium">{new Date(child.birthDate).toLocaleDateString('ko-KR')}</span>
+                  <span className="text-muted-foreground">진단</span>
+                  <span className="font-medium">{child.diagnosis || '-'}</span>
                   <span className="text-muted-foreground">시작일</span>
                   <span className="font-medium">{new Date(child.startDate).toLocaleDateString('ko-KR')}</span>
                   <span className="text-muted-foreground">최근 세션</span>
                   <span className="font-medium">{child.lastSessionDate ? new Date(child.lastSessionDate).toLocaleDateString('ko-KR') : '-'}</span>
-                  <span className="text-muted-foreground">진단</span>
-                  <span className="font-medium">{child.diagnosis || '-'}</span>
                 </div>
-                {child.concern && (
-                  <p className="text-xs text-muted-foreground pt-1 bg-muted/30 rounded-md px-3 py-2">📌 {child.concern}</p>
-                )}
               </div>
 
-              {/* Guardian */}
+              {/* 보호자 정보 */}
               <div className="space-y-3">
                 <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">보호자 정보</h3>
                 <div className="flex items-center gap-3">
@@ -103,11 +100,37 @@ export default function CaseDetail() {
                     <p className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5"><Phone className="h-3 w-3" />{child.guardianPhone}</p>
                   </div>
                 </div>
-                {child.notes && (
-                  <div className="pt-2">
-                    <p className="text-xs text-muted-foreground bg-muted/30 rounded-md px-3 py-2">📝 {child.notes}</p>
-                  </div>
-                )}
+              </div>
+            </div>
+
+            {/* 주요 사항 */}
+            <div className="border-t border-border/50 pt-4 space-y-3">
+              <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">주요 사항</h3>
+              <div className="grid gap-3 sm:grid-cols-2">
+                {/* 최초 */}
+                <div className="rounded-lg bg-muted/30 px-4 py-3 space-y-1.5">
+                  <p className="text-[11px] font-semibold text-muted-foreground">최초</p>
+                  <ul className="space-y-1">
+                    {(child.concern || '언어발달지연, 사회적 상호작용 어려움').split(/[,،]/).map((item, i) => (
+                      <li key={i} className="text-sm text-foreground flex items-start gap-1.5">
+                        <span className="text-muted-foreground mt-0.5">•</span>
+                        <span>{item.trim()}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+                {/* 최근 */}
+                <div className="rounded-lg bg-primary/5 border border-primary/10 px-4 py-3 space-y-1.5">
+                  <p className="text-[11px] font-semibold text-primary">최근</p>
+                  <ul className="space-y-1">
+                    {(child.notes || '눈맞춤빈도 증가, 단어사용량 향상').split(/[,،]/).map((item, i) => (
+                      <li key={i} className="text-sm text-foreground flex items-start gap-1.5">
+                        <span className="text-primary mt-0.5">▲</span>
+                        <span>{item.trim()}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
               </div>
             </div>
           </div>
