@@ -87,11 +87,24 @@ export function SessionScheduler() {
   const detailChild = detailSession ? children.find(c => c.id === detailSession.childId) : null;
   const detailTherapist = detailSession ? therapists.find(t => t.id === detailSession.therapistId) : null;
 
+  const isAdmin = role === 'admin';
+
+  // Get main domain labels for a session's trials
+  const getSessionDomains = (session: typeof sessions[0]) => {
+    const domainSet = new Set<string>();
+    session.trials.forEach(t => {
+      const goal = goals.find(g => g.id === t.goalId);
+      if (goal?.domain) {
+        const domainInfo = getDomainLabel(goal.domain);
+        domainSet.add(domainInfo);
+      }
+    });
+    return Array.from(domainSet).slice(0, 2);
+  };
+
   const renderSessionBadge = (session: typeof sessions[0], compact = false) => {
     const child = children.find(c => c.id === session.childId);
-    const totalTrials = session.trials.reduce((a, t) => a + t.trials, 0);
-    const totalSuccesses = session.trials.reduce((a, t) => a + t.successes, 0);
-    const avgRate = totalTrials > 0 ? Math.round((totalSuccesses / totalTrials) * 100) : 0;
+    const domains = getSessionDomains(session);
 
     return (
       <button
@@ -101,10 +114,10 @@ export function SessionScheduler() {
           'w-full text-left rounded-md px-1.5 py-0.5 text-[10px] font-medium truncate transition-colors',
           'bg-primary/10 text-primary hover:bg-primary/20 border border-primary/20'
         )}
-        title={`${child?.name} · ${avgRate}%`}
+        title={`${child?.name}${domains.length > 0 ? ' · ' + domains.join(', ') : ''}`}
       >
-        {compact ? child?.name?.charAt(0) : child?.name}
-        {!compact && <span className="ml-1 opacity-70">{avgRate}%</span>}
+        {child?.name}
+        {!compact && domains.length > 0 && <span className="ml-1 opacity-60 text-[9px]">{domains[0]}</span>}
       </button>
     );
   };
