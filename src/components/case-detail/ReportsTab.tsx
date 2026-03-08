@@ -203,30 +203,36 @@ export function ReportsTab({ childId, child, reports, sessions, goals }: Reports
       const promptImprovingGoals = goalStats.filter(s => s.promptTrend === '향상');
 
       const summaryParts: string[] = [];
-      if (improvingGoals.length > 0) summaryParts.push(`${improvingGoals.map(g => g.goal.title).join(', ')} 목표 성공률 향상`);
-      if (decliningGoals.length > 0) summaryParts.push(`${decliningGoals.map(g => g.goal.title).join(', ')} 목표 주의 필요`);
-      if (promptImprovingGoals.length > 0) summaryParts.push(`${promptImprovingGoals.map(g => g.goal.title).join(', ')} 독립성 향상`);
-      const summary = summaryParts.length > 0 ? summaryParts.join('. ') + '.' : `${periodSessions.length}회 세션 진행. 전반적으로 안정적인 수행.`;
+      if (improvingGoals.length > 0) summaryParts.push(`${improvingGoals.map(g => g.goal.title).join(', ')} 영역에서 눈에 띄는 성장을 보이고 있습니다`);
+      if (decliningGoals.length > 0) summaryParts.push(`${decliningGoals.map(g => g.goal.title).join(', ')} 영역은 추가 연습이 필요합니다`);
+      if (promptImprovingGoals.length > 0) summaryParts.push(`${promptImprovingGoals.map(g => g.goal.title).join(', ')} 영역에서 도움 없이 스스로 해내는 비율이 높아지고 있습니다`);
+      const summary = summaryParts.length > 0 ? summaryParts.join('. ') + '.' : `${periodSessions.length}회 세션이 진행되었으며, 전반적으로 안정적인 수행을 보이고 있습니다.`;
 
-      const content = `[${child.name} 아동 - ${periodLabel} 관찰 보고서]
+      // Parent-friendly descriptions for prompt levels
+      const promptFriendly = (level: number) => {
+        const labels = ['스스로 해냄', '살짝 힌트', '말로 안내', '시범 보여줌', '직접 도와줌'];
+        return labels[Math.min(Math.round(level), 4)] || '스스로 해냄';
+      };
 
-※ 본 리포트는 진단이나 처방이 아닌, 입력된 치료 기록을 기반으로 한 관찰 요약입니다.
+      const content = `[${child.name} 아동 - ${periodLabel} 치료 경과 안내]
 
 안녕하세요, ${child.guardianName} 보호자님.
+${periodLabel} 동안 진행된 ${periodSessions.length}회 치료 세션에 대해 안내드립니다.
 
-${periodLabel} 동안 진행된 ${periodSessions.length}회의 치료 세션에 대한 관찰 내용을 전달드립니다.
+※ 본 안내는 치료 세션에서 관찰된 내용을 정리한 것이며, 의학적 진단이나 처방은 아닙니다.
 
-【기간 요약】
-${periodSessions.length}회의 세션이 진행되었으며, ${includedGoals.length}개의 치료 목표에 대한 기록이 포함되어 있습니다.
+■ 전체 요약
+총 ${periodSessions.length}회의 세션에서 ${includedGoals.length}개의 치료 활동을 진행했습니다.
 
-【목표별 변화】
+■ 활동별 경과
 
 ${goalStats.map((stat, i) => `${i + 1}. ${stat.goal.title} (${stat.goal.category})
-   - 성공률: ${stat.firstRate}% → ${stat.lastRate}% (${stat.successTrend})
-   - 촉진 수준: ${promptLevelLabels[Math.round(stat.firstPrompt)]} → ${promptLevelLabels[Math.round(stat.lastPrompt)]} (${stat.promptTrend})
-   - 세션 수: ${stat.sessionCount}회
-   - 문제행동: 총 ${stat.problemBehaviors}회`).join('\n\n')}
+   · 얼마나 잘하나요: ${stat.firstRate}% → ${stat.lastRate}% (${stat.successTrend === '향상' ? '📈 잘해지고 있어요' : stat.successTrend === '감소' ? '📉 조금 어려워하고 있어요' : '➡️ 비슷한 수준이에요'})
+   · 어느 정도 도움이 필요한가요: ${promptFriendly(stat.firstPrompt)} → ${promptFriendly(stat.lastPrompt)}${stat.promptTrend === '향상' ? ' (점점 혼자 해내고 있어요 👏)' : ''}
+   · 진행 횟수: ${stat.sessionCount}회${stat.problemBehaviors > 0 ? `\n   · 힘들어하는 모습: ${stat.problemBehaviors}회 관찰됨` : ''}`).join('\n\n')}
 
+■ 가정에서 참고해 주세요
+${improvingGoals.length > 0 ? `• ${improvingGoals.map(g => g.goal.title).join(', ')} 활동에서 좋은 변화가 보이고 있습니다. 가정에서도 비슷한 상황을 만들어 연습해보시면 더 빠른 발전을 기대할 수 있습니다.\n` : ''}${decliningGoals.length > 0 ? `• ${decliningGoals.map(g => g.goal.title).join(', ')} 활동은 아직 연습이 더 필요합니다. 너무 걱정하지 않으셔도 되며, 치료 전략을 조정하여 진행하겠습니다.\n` : ''}
 감사합니다.
 담당 치료사: ${therapist?.name || ''}`;
 
