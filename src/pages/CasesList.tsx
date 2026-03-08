@@ -221,12 +221,7 @@ export default function CasesList() {
                     <p className="text-sm font-medium truncate">{child.name}</p>
                     <p className="text-xs text-muted-foreground">{child.age}세 · {child.diagnosis || child.concern}</p>
                   </div>
-                  <div className="flex flex-col items-end gap-1">
-                    <span className={`text-xs font-semibold ${successRate >= 70 ? 'text-success' : successRate >= 50 ? 'text-warning' : 'text-destructive'}`}>
-                      {successRate}%
-                    </span>
-                    {getTrendBadge(child.trend)}
-                  </div>
+                  {getStatusBadge(child.status)}
                 </button>
               );
             })}
