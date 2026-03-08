@@ -270,9 +270,21 @@ export function SessionScheduler() {
                           today && 'text-primary'
                         )}>{format(day, 'd')}</p>
                       </div>
-                      {/* Sessions in cell */}
                       <div className="flex flex-col gap-1 p-1 flex-1">
-                        {daySessions.map(s => renderSessionBadge(s))}
+                        {daySessions.map(s => {
+                          const child = children.find(c => c.id === s.childId);
+                          const domains = getSessionDomains(s);
+                          return (
+                            <button
+                              key={s.id}
+                              onClick={() => setSelectedSession(s.id)}
+                              className="w-full text-left rounded-md px-1.5 py-1 text-[10px] font-medium truncate transition-colors bg-primary/10 text-primary hover:bg-primary/20 border border-primary/20"
+                            >
+                              <p className="truncate">{child?.name}</p>
+                              <p className="text-[9px] opacity-60 truncate">{s.duration}분{domains.length > 0 ? ` · ${domains[0]}` : ''}</p>
+                            </button>
+                          );
+                        })}
                         {daySessions.length === 0 && (
                           <p className="text-[9px] text-muted-foreground text-center mt-4 opacity-50">—</p>
                         )}
