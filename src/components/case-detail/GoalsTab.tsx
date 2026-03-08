@@ -128,9 +128,9 @@ export function GoalsTab({ childId, goals }: GoalsTabProps) {
     <div className="space-y-4">
       <div className="flex items-center justify-between flex-wrap gap-2">
         <div className="flex items-center gap-3">
-          <h2 className="text-lg font-semibold">VB-MAPP 목표</h2>
+          <h2 className="text-lg font-semibold">치료 목표</h2>
           <Badge variant="outline" className="text-xs">
-            LTO {activeLTOs}개 · STO {totalSTOs}개
+            장기 {activeLTOs}개 · 단기 {totalSTOs}개
           </Badge>
         </div>
         <div className="flex items-center gap-2">
@@ -161,7 +161,7 @@ export function GoalsTab({ childId, goals }: GoalsTabProps) {
               </DialogTrigger>
               <DialogContent className="max-w-lg">
                 <DialogHeader>
-                  <DialogTitle>새 VB-MAPP 목표 추가</DialogTitle>
+                  <DialogTitle>새 치료 목표 추가</DialogTitle>
                 </DialogHeader>
                 <div className="grid gap-4 py-4">
                   {/* Objective Type */}
@@ -174,8 +174,8 @@ export function GoalsTab({ childId, goals }: GoalsTabProps) {
                       >
                         <SelectTrigger><SelectValue /></SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="LTO">장기목표 (LTO)</SelectItem>
-                          <SelectItem value="STO">단기목표 (STO)</SelectItem>
+                          <SelectItem value="LTO">장기목표</SelectItem>
+                          <SelectItem value="STO">단기목표</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
@@ -214,7 +214,7 @@ export function GoalsTab({ childId, goals }: GoalsTabProps) {
                   {/* Parent LTO (for STO only) */}
                   {newGoal.objectiveType === 'STO' && availableLTOs.length > 0 && (
                     <div className="space-y-2">
-                      <Label>상위 장기목표 (LTO)</Label>
+                      <Label>상위 장기목표</Label>
                       <Select
                         value={newGoal.parentProgramId || ''}
                         onValueChange={(v) => setNewGoal({ ...newGoal, parentProgramId: v })}
@@ -300,7 +300,7 @@ export function GoalsTab({ childId, goals }: GoalsTabProps) {
                       <Badge variant="outline" className="text-[10px]">
                         {lto.domain ? getDomainLabel(lto.domain) : lto.category}
                       </Badge>
-                      <Badge variant="secondary" className="text-[10px]">LTO</Badge>
+                      <Badge variant="secondary" className="text-[10px]">장기목표</Badge>
                       <Badge className={`text-[10px] ${getStatusColor(lto.status)}`}>
                         {lto.status === 'active' ? '활성' : lto.status === 'mastered' ? '달성' : '일시정지'}
                       </Badge>
@@ -309,7 +309,7 @@ export function GoalsTab({ childId, goals }: GoalsTabProps) {
                     <p className="text-xs text-muted-foreground truncate">{lto.description}</p>
                   </div>
                   <div className="text-xs text-muted-foreground whitespace-nowrap">
-                    STO {activeSTOs}/{childSTOs.length}
+                    단기 {activeSTOs}/{childSTOs.length}
                   </div>
                 </div>
 
@@ -320,7 +320,7 @@ export function GoalsTab({ childId, goals }: GoalsTabProps) {
                       <div key={sto.id} className="flex items-start gap-3 p-3 pl-12 border-b last:border-b-0">
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 mb-1">
-                            <Badge variant="outline" className="text-[10px]">STO</Badge>
+                            <Badge variant="outline" className="text-[10px]">단기목표</Badge>
                             <Badge className={`text-[10px] ${getStatusColor(sto.status)}`}>
                               {sto.status === 'active' ? '활성' : sto.status === 'mastered' ? '달성' : '일시정지'}
                             </Badge>
@@ -340,7 +340,7 @@ export function GoalsTab({ childId, goals }: GoalsTabProps) {
                 )}
                 {isExpanded && childSTOs.length === 0 && (
                   <div className="border-t p-3 pl-12 text-xs text-muted-foreground">
-                    등록된 단기목표(STO)가 없습니다
+                    등록된 단기목표가 없습니다
                   </div>
                 )}
               </Card>

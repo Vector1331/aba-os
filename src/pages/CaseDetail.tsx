@@ -69,12 +69,12 @@ export default function CaseDetail() {
 
         {/* Overview Tab */}
         <TabsContent value="overview" className="space-y-6">
-          <div className="rounded-xl border border-border bg-card p-5">
-            <div className="grid gap-6 sm:grid-cols-2">
+          <div className="rounded-xl border border-border bg-card px-4 py-3">
+            <div className="grid gap-4 sm:grid-cols-2">
               {/* 아동 정보 */}
-              <div className="space-y-3">
-                <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">아동 정보</h3>
-                <div className="grid grid-cols-[auto_1fr] gap-x-6 gap-y-2 text-sm">
+              <div className="space-y-1.5">
+                <h3 className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">아동 정보</h3>
+                <div className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 text-xs">
                   <span className="text-muted-foreground">나이</span>
                   <span className="font-medium">{child.age}세</span>
                   <span className="text-muted-foreground">생년월일</span>
@@ -88,30 +88,24 @@ export default function CaseDetail() {
                 </div>
               </div>
 
-              {/* 보호자 정보 + 주요 사항 */}
-              <div className="space-y-4">
-                <div className="space-y-3">
-                  <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">보호자 정보</h3>
-                  <div className="flex items-center gap-3">
-                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-muted text-sm font-semibold">
+              {/* 보호자 + 주요 사항 */}
+              <div className="space-y-2.5">
+                <div className="space-y-1.5">
+                  <h3 className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">보호자 정보</h3>
+                  <div className="flex items-center gap-2">
+                    <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-muted text-[10px] font-semibold">
                       {child.guardianName?.charAt(0)}
                     </div>
                     <div>
-                      <p className="text-sm font-medium">{child.guardianName} <span className="text-muted-foreground font-normal">({child.guardianRelation})</span></p>
-                      <p className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5"><Phone className="h-3 w-3" />{child.guardianPhone}</p>
+                      <p className="text-xs font-medium">{child.guardianName} <span className="text-muted-foreground font-normal">({child.guardianRelation})</span></p>
+                      <p className="text-[10px] text-muted-foreground flex items-center gap-1"><Phone className="h-2.5 w-2.5" />{child.guardianPhone}</p>
                     </div>
                   </div>
                 </div>
-
-                {/* 주요 사항 */}
-                <div className="space-y-2">
-                  <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">주요 사항</h3>
-                  {child.concern && (
-                    <p className="text-xs text-muted-foreground">📌 {child.concern}</p>
-                  )}
-                  {child.notes && (
-                    <p className="text-xs text-foreground">📝 {child.notes}</p>
-                  )}
+                <div className="space-y-1">
+                  <h3 className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">주요 사항</h3>
+                  {child.concern && <p className="text-[11px] text-muted-foreground">📌 {child.concern}</p>}
+                  {child.notes && <p className="text-[11px] text-foreground">📝 {child.notes}</p>}
                 </div>
               </div>
             </div>
