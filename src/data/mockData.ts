@@ -127,6 +127,7 @@ export interface Session {
   childId: string;
   therapistId: string;
   date: string;
+  startTime: string; // e.g. "10:00"
   duration: number;
   notes: string;
   // Trial-centric: individual trials
