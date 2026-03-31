@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { Plus, ChevronDown, ChevronRight, Layers } from 'lucide-react';
+import { Plus, ChevronDown, ChevronRight, Layers, Pencil, Trash2, Check } from 'lucide-react';
 import { useApp } from '@/context/AppContext';
 import { Switch } from '@/components/ui/switch';
 import { Button } from '@/components/ui/button';
@@ -12,6 +12,17 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
@@ -31,9 +42,11 @@ interface GoalsTabProps {
 }
 
 export function GoalsTab({ childId, goals }: GoalsTabProps) {
-  const { addGoal, updateGoal, role } = useApp();
+  const { addGoal, updateGoal, deleteGoal, role } = useApp();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [editingGoal, setEditingGoal] = useState<Goal | null>(null);
   const [selectedLevel, setSelectedLevel] = useState<VBMAPPLevel | 'all'>('all');
+  const [showMastered, setShowMastered] = useState(false);
   const [expandedLTOs, setExpandedLTOs] = useState<Set<string>>(new Set());
   const [newGoal, setNewGoal] = useState<Partial<Goal>>({
     category: '',
@@ -45,20 +58,22 @@ export function GoalsTab({ childId, goals }: GoalsTabProps) {
 
   const canCreate = role === 'admin' || role === 'therapist';
 
-  // Separate LTOs and STOs
-  const ltos = useMemo(() => goals.filter(g => g.objectiveType === 'LTO'), [goals]);
-  const stos = useMemo(() => goals.filter(g => g.objectiveType === 'STO'), [goals]);
+  // Separate by status
+  const activeGoals = useMemo(() => goals.filter(g => g.status !== 'mastered'), [goals]);
+  const masteredGoals = useMemo(() => goals.filter(g => g.status === 'mastered'), [goals]);
 
-  // Filter by level
+  const currentGoals = showMastered ? masteredGoals : activeGoals;
+
+  const ltos = useMemo(() => currentGoals.filter(g => g.objectiveType === 'LTO'), [currentGoals]);
+  const stos = useMemo(() => currentGoals.filter(g => g.objectiveType === 'STO'), [currentGoals]);
+
   const filteredLTOs = useMemo(() => {
     if (selectedLevel === 'all') return ltos;
     return ltos.filter(g => g.vbmappLevel === selectedLevel);
   }, [ltos, selectedLevel]);
 
-  // Get STOs for a given LTO
   const getSTOsForLTO = (ltoId: string) => stos.filter(s => s.parentProgramId === ltoId);
 
-  // Orphan STOs (no parent LTO)
   const orphanSTOs = useMemo(() => {
     const ltoIds = new Set(ltos.map(l => l.id));
     return stos.filter(s => !s.parentProgramId || !ltoIds.has(s.parentProgramId));
@@ -77,32 +92,61 @@ export function GoalsTab({ childId, goals }: GoalsTabProps) {
     return VBMAPP_DOMAINS[level] || [];
   }, [newGoal.vbmappLevel]);
 
-  // Available LTOs for STO parent selection
   const availableLTOs = useMemo(() => {
     return goals.filter(g => g.objectiveType === 'LTO' && g.childId === childId);
   }, [goals, childId]);
 
-  const handleCreateGoal = () => {
+  const openEditDialog = (goal: Goal) => {
+    setEditingGoal(goal);
+    setNewGoal({ ...goal });
+    setIsDialogOpen(true);
+  };
+
+  const openCreateDialog = () => {
+    setEditingGoal(null);
+    setNewGoal({ category: '', status: 'active', objectiveType: 'STO', vbmappLevel: 1, domain: 'mand' });
+    setIsDialogOpen(true);
+  };
+
+  const handleSaveGoal = () => {
     if (!newGoal.title || !newGoal.description) return;
 
-    const goal: Goal = {
-      id: `g${Date.now()}`,
-      childId,
-      title: newGoal.title,
-      description: newGoal.description,
-      category: getDomainLabel(newGoal.domain || 'mand'),
-      targetCriteria: newGoal.targetCriteria || '',
-      createdAt: new Date().toISOString().split('T')[0],
-      status: 'active',
-      vbmappLevel: newGoal.vbmappLevel as VBMAPPLevel,
-      domain: newGoal.domain,
-      objectiveType: newGoal.objectiveType as ObjectiveType,
-      parentProgramId: newGoal.objectiveType === 'STO' ? newGoal.parentProgramId : undefined,
-    };
+    if (editingGoal) {
+      updateGoal(editingGoal.id, {
+        title: newGoal.title,
+        description: newGoal.description,
+        category: getDomainLabel(newGoal.domain || 'mand'),
+        targetCriteria: newGoal.targetCriteria || '',
+        vbmappLevel: newGoal.vbmappLevel as VBMAPPLevel,
+        domain: newGoal.domain,
+        objectiveType: newGoal.objectiveType as ObjectiveType,
+        parentProgramId: newGoal.objectiveType === 'STO' ? newGoal.parentProgramId : undefined,
+      });
+    } else {
+      const goal: Goal = {
+        id: `g${Date.now()}`,
+        childId,
+        title: newGoal.title,
+        description: newGoal.description,
+        category: getDomainLabel(newGoal.domain || 'mand'),
+        targetCriteria: newGoal.targetCriteria || '',
+        createdAt: new Date().toISOString().split('T')[0],
+        status: 'active',
+        vbmappLevel: newGoal.vbmappLevel as VBMAPPLevel,
+        domain: newGoal.domain,
+        objectiveType: newGoal.objectiveType as ObjectiveType,
+        parentProgramId: newGoal.objectiveType === 'STO' ? newGoal.parentProgramId : undefined,
+      };
+      addGoal(goal);
+    }
 
-    addGoal(goal);
     setIsDialogOpen(false);
+    setEditingGoal(null);
     setNewGoal({ category: '', status: 'active', objectiveType: 'STO', vbmappLevel: 1, domain: 'mand' });
+  };
+
+  const handleDeleteGoal = (goalId: string) => {
+    deleteGoal(goalId);
   };
 
   const getStatusColor = (status: string) => {
@@ -122,8 +166,9 @@ export function GoalsTab({ childId, goals }: GoalsTabProps) {
     }
   };
 
-  const totalSTOs = stos.length;
-  const activeLTOs = filteredLTOs.filter(g => g.status === 'active').length;
+  const activeLTOCount = activeGoals.filter(g => g.objectiveType === 'LTO' && g.status === 'active').length;
+  const activeSTOCount = activeGoals.filter(g => g.objectiveType === 'STO').length;
+  const masteredCount = masteredGoals.length;
 
   return (
     <div className="space-y-4">
@@ -131,11 +176,15 @@ export function GoalsTab({ childId, goals }: GoalsTabProps) {
         <div className="flex items-center gap-3">
           <h2 className="text-lg font-semibold">치료 목표</h2>
           <Badge variant="outline" className="text-xs">
-            장기 {activeLTOs}개 · 단기 {totalSTOs}개
+            장기 {activeLTOCount}개 · 단기 {activeSTOCount}개
           </Badge>
+          {masteredCount > 0 && (
+            <Badge variant="secondary" className="text-xs cursor-pointer" onClick={() => setShowMastered(!showMastered)}>
+              {showMastered ? '활성 목표 보기' : `완료 ${masteredCount}개`}
+            </Badge>
+          )}
         </div>
         <div className="flex items-center gap-2">
-          {/* Level filter */}
           <Select
             value={String(selectedLevel)}
             onValueChange={(v) => setSelectedLevel(v === 'all' ? 'all' : (Number(v) as VBMAPPLevel))}
@@ -153,19 +202,18 @@ export function GoalsTab({ childId, goals }: GoalsTabProps) {
           </Select>
 
           {canCreate && (
-            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+            <Dialog open={isDialogOpen} onOpenChange={(open) => { setIsDialogOpen(open); if (!open) setEditingGoal(null); }}>
               <DialogTrigger asChild>
-                <Button size="sm" className="gap-2">
+                <Button size="sm" className="gap-2" onClick={openCreateDialog}>
                   <Plus className="h-4 w-4" />
                   목표 추가
                 </Button>
               </DialogTrigger>
               <DialogContent className="max-w-lg">
                 <DialogHeader>
-                  <DialogTitle>새 치료 목표 추가</DialogTitle>
+                  <DialogTitle>{editingGoal ? '목표 수정' : '새 치료 목표 추가'}</DialogTitle>
                 </DialogHeader>
                 <div className="grid gap-4 py-4">
-                  {/* Objective Type */}
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label>목표 유형 *</Label>
@@ -196,9 +244,8 @@ export function GoalsTab({ childId, goals }: GoalsTabProps) {
                     </div>
                   </div>
 
-                  {/* Domain */}
                   <div className="space-y-2">
-                    <Label>발달영역 *</Label>
+                    <Label>영역 *</Label>
                     <Select
                       value={newGoal.domain}
                       onValueChange={(v) => setNewGoal({ ...newGoal, domain: v })}
@@ -212,7 +259,6 @@ export function GoalsTab({ childId, goals }: GoalsTabProps) {
                     </Select>
                   </div>
 
-                  {/* Parent LTO (for STO only) */}
                   {newGoal.objectiveType === 'STO' && availableLTOs.length > 0 && (
                     <div className="space-y-2">
                       <Label>상위 장기목표</Label>
@@ -245,8 +291,8 @@ export function GoalsTab({ childId, goals }: GoalsTabProps) {
                       id="description"
                       value={newGoal.description || ''}
                       onChange={(e) => setNewGoal({ ...newGoal, description: e.target.value })}
-                      placeholder={newGoal.objectiveType === 'LTO' 
-                        ? '예: 아동이 원하는 품목이나 활동을 요구할 때, 단어를 사용할 수 있다.' 
+                      placeholder={newGoal.objectiveType === 'LTO'
+                        ? '예: 아동이 원하는 품목이나 활동을 요구할 때, 단어를 사용할 수 있다.'
                         : '예: 신체적 촉구 없이 2개의 단어로 원하는 품목을 요구할 수 있다.'}
                     />
                   </div>
@@ -261,8 +307,8 @@ export function GoalsTab({ childId, goals }: GoalsTabProps) {
                       />
                     </div>
                   )}
-                  <Button onClick={handleCreateGoal} className="mt-2">
-                    목표 추가
+                  <Button onClick={handleSaveGoal} className="mt-2">
+                    {editingGoal ? '수정 완료' : '목표 추가'}
                   </Button>
                 </div>
               </DialogContent>
@@ -271,11 +317,19 @@ export function GoalsTab({ childId, goals }: GoalsTabProps) {
         </div>
       </div>
 
-      {/* LTO/STO Hierarchy */}
+      {showMastered && (
+        <div className="flex items-center gap-2 p-2 rounded-md bg-success/10 border border-success/20">
+          <Check className="h-4 w-4 text-success" />
+          <span className="text-sm text-success font-medium">완료된 목표를 보고 있습니다</span>
+        </div>
+      )}
+
       {filteredLTOs.length === 0 && orphanSTOs.length === 0 ? (
         <Card>
           <CardContent className="flex h-32 items-center justify-center">
-            <p className="text-muted-foreground">등록된 목표가 없습니다</p>
+            <p className="text-muted-foreground">
+              {showMastered ? '완료된 목표가 없습니다' : '등록된 목표가 없습니다'}
+            </p>
           </CardContent>
         </Card>
       ) : (
@@ -287,7 +341,6 @@ export function GoalsTab({ childId, goals }: GoalsTabProps) {
 
             return (
               <Card key={lto.id} className="overflow-hidden">
-                {/* LTO Header */}
                 <div
                   className="flex items-center gap-3 p-4 cursor-pointer hover:bg-muted/50 transition-colors"
                   onClick={() => toggleLTO(lto.id)}
@@ -309,24 +362,56 @@ export function GoalsTab({ childId, goals }: GoalsTabProps) {
                     <h3 className="font-semibold text-sm">{lto.title}</h3>
                     <p className="text-xs text-muted-foreground truncate">{lto.description}</p>
                   </div>
-                  <div className="flex items-center gap-3 whitespace-nowrap">
+                  <div className="flex items-center gap-2 whitespace-nowrap">
                     <div className="text-xs text-muted-foreground">
                       단기 {activeSTOs}/{childSTOs.length}
                     </div>
                     {canCreate && (
-                      <Switch
-                        checked={lto.status === 'active'}
-                        onCheckedChange={(checked) => {
-                          updateGoal(lto.id, { status: checked ? 'active' : 'paused' });
-                        }}
-                        onClick={(e) => e.stopPropagation()}
-                        className="scale-75"
-                      />
+                      <>
+                        <Button
+                          variant="ghost" size="icon" className="h-7 w-7"
+                          onClick={(e) => { e.stopPropagation(); openEditDialog(lto); }}
+                        >
+                          <Pencil className="h-3 w-3" />
+                        </Button>
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button
+                              variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:text-destructive"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              <Trash2 className="h-3 w-3" />
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent onClick={(e) => e.stopPropagation()}>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>목표 삭제</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                "{lto.title}" 장기목표와 연결된 단기목표 {childSTOs.length}개도 함께 삭제됩니다.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>취소</AlertDialogCancel>
+                              <AlertDialogAction onClick={() => {
+                                childSTOs.forEach(s => handleDeleteGoal(s.id));
+                                handleDeleteGoal(lto.id);
+                              }}>삭제</AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                        <Switch
+                          checked={lto.status === 'active'}
+                          onCheckedChange={(checked) => {
+                            updateGoal(lto.id, { status: checked ? 'active' : 'paused' });
+                          }}
+                          onClick={(e) => e.stopPropagation()}
+                          className="scale-75"
+                        />
+                      </>
                     )}
                   </div>
                 </div>
 
-                {/* STO Children */}
                 {isExpanded && childSTOs.length > 0 && (
                   <div className="border-t bg-muted/20">
                     {childSTOs.map((sto) => (
@@ -348,13 +433,40 @@ export function GoalsTab({ childId, goals }: GoalsTabProps) {
                           )}
                         </div>
                         {canCreate && (
-                          <Switch
-                            checked={sto.status === 'active'}
-                            onCheckedChange={(checked) => {
-                              updateGoal(sto.id, { status: checked ? 'active' : 'paused' });
-                            }}
-                            className="scale-75 mt-1"
-                          />
+                          <div className="flex items-center gap-1 mt-1">
+                            <Button
+                              variant="ghost" size="icon" className="h-7 w-7"
+                              onClick={() => openEditDialog(sto)}
+                            >
+                              <Pencil className="h-3 w-3" />
+                            </Button>
+                            <AlertDialog>
+                              <AlertDialogTrigger asChild>
+                                <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:text-destructive">
+                                  <Trash2 className="h-3 w-3" />
+                                </Button>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent>
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle>목표 삭제</AlertDialogTitle>
+                                  <AlertDialogDescription>
+                                    "{sto.title}" 단기목표를 삭제하시겠습니까?
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel>취소</AlertDialogCancel>
+                                  <AlertDialogAction onClick={() => handleDeleteGoal(sto.id)}>삭제</AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
+                            <Switch
+                              checked={sto.status === 'active'}
+                              onCheckedChange={(checked) => {
+                                updateGoal(sto.id, { status: checked ? 'active' : 'paused' });
+                              }}
+                              className="scale-75"
+                            />
+                          </div>
                         )}
                       </div>
                     ))}
@@ -369,7 +481,6 @@ export function GoalsTab({ childId, goals }: GoalsTabProps) {
             );
           })}
 
-          {/* Orphan STOs */}
           {orphanSTOs.length > 0 && selectedLevel === 'all' && (
             <div className="space-y-2">
               <h3 className="text-sm font-medium text-muted-foreground">미분류 단기목표</h3>
@@ -379,9 +490,35 @@ export function GoalsTab({ childId, goals }: GoalsTabProps) {
                     <CardContent className="p-4">
                       <div className="mb-2 flex items-start justify-between">
                         <Badge variant="outline" className="text-xs">{sto.domain ? getDomainLabel(sto.domain) : sto.category}</Badge>
-                        <Badge className={getStatusColor(sto.status)}>
-                          {sto.status === 'active' ? '활성' : sto.status === 'mastered' ? '달성' : '일시정지'}
-                        </Badge>
+                        <div className="flex items-center gap-1">
+                          <Badge className={getStatusColor(sto.status)}>
+                            {sto.status === 'active' ? '활성' : sto.status === 'mastered' ? '달성' : '일시정지'}
+                          </Badge>
+                          {canCreate && (
+                            <>
+                              <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => openEditDialog(sto)}>
+                                <Pencil className="h-3 w-3" />
+                              </Button>
+                              <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                  <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive hover:text-destructive">
+                                    <Trash2 className="h-3 w-3" />
+                                  </Button>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent>
+                                  <AlertDialogHeader>
+                                    <AlertDialogTitle>목표 삭제</AlertDialogTitle>
+                                    <AlertDialogDescription>"{sto.title}" 단기목표를 삭제하시겠습니까?</AlertDialogDescription>
+                                  </AlertDialogHeader>
+                                  <AlertDialogFooter>
+                                    <AlertDialogCancel>취소</AlertDialogCancel>
+                                    <AlertDialogAction onClick={() => handleDeleteGoal(sto.id)}>삭제</AlertDialogAction>
+                                  </AlertDialogFooter>
+                                </AlertDialogContent>
+                              </AlertDialog>
+                            </>
+                          )}
+                        </div>
                       </div>
                       <h3 className="mb-1 font-semibold text-sm">{sto.title}</h3>
                       <p className="text-xs text-muted-foreground">{sto.description}</p>
