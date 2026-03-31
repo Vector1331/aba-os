@@ -105,7 +105,6 @@ export function SessionScheduler() {
 
   const renderSessionBadge = (session: typeof sessions[0], compact = false) => {
     const child = children.find(c => c.id === session.childId);
-    const domains = getSessionDomains(session);
 
     return (
       <button
@@ -115,10 +114,10 @@ export function SessionScheduler() {
           'w-full text-left rounded-md px-1.5 py-0.5 text-[10px] font-medium truncate transition-colors',
           'bg-primary/10 text-primary hover:bg-primary/20 border border-primary/20'
         )}
-        title={`${child?.name}${domains.length > 0 ? ' · ' + domains.join(', ') : ''}`}
+        title={`${child?.name} · ${session.startTime}`}
       >
         {child?.name}
-        {!compact && domains.length > 0 && <span className="ml-1 opacity-60 text-[9px]">{domains[0]}</span>}
+        {!compact && <span className="ml-1 opacity-60 text-[9px]">{session.startTime}</span>}
       </button>
     );
   };

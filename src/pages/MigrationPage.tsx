@@ -268,6 +268,7 @@ export default function MigrationPage() {
           childId: child.id,
           therapistId: therapists[0]?.id || 'th1',
           date: row.session_date,
+          startTime: '10:00',
           duration: 50,
           notes: row.session_note || '',
           trialRecords: [],
