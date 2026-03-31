@@ -363,6 +363,11 @@ export const initialGoals: Program[] = [
   { id: 'g6b', childId: 'c2', title: '기능적 놀이', description: '장난감을 용도에 맞게 사용하기(자동차 굴리기, 블록 쌓기)', category: '놀이', targetCriteria: '5개 장난감 독립 사용', createdAt: '2024-11-15', status: 'active', vbmappLevel: 1, domain: 'play', objectiveType: 'STO', parentProgramId: 'g6b-lto' },
   { id: 'g6c', childId: 'c2', title: '독립 놀이 유지', description: '감독 하에 10분 이상 독립적으로 놀이 활동 유지하기', category: '놀이', targetCriteria: '3회 연속 10분 이상', createdAt: '2024-12-01', status: 'active', vbmappLevel: 1, domain: 'play', objectiveType: 'STO', parentProgramId: 'g6b-lto' },
 
+  // 완료된 목표 (c2)
+  { id: 'g6d-lto', childId: 'c2', title: '에코익(따라 말하기)', description: '치료사의 음성 모델을 따라 말할 수 있다.', category: '에코익', targetCriteria: '', createdAt: '2024-10-01', status: 'mastered', vbmappLevel: 1, domain: 'echoic', objectiveType: 'LTO' },
+  { id: 'g6d', childId: 'c2', title: '단음절 따라하기', description: '단음절 소리를 정확하게 따라 말할 수 있다.', category: '에코익', targetCriteria: '10회 중 8회 정확', createdAt: '2024-10-01', status: 'mastered', vbmappLevel: 1, domain: 'echoic', objectiveType: 'STO', parentProgramId: 'g6d-lto' },
+  { id: 'g6e', childId: 'c2', title: '간단한 인사하기', description: '안녕이라고 말할 수 있다.', category: '사회성', targetCriteria: '5회 연속 자발적 인사', createdAt: '2024-10-15', status: 'mastered', vbmappLevel: 1, domain: 'social', objectiveType: 'STO', parentProgramId: 'g4-lto' },
+
   // ═══════════════════════════════════════
   // 박지우 (c3) - Level 2
   // ═══════════════════════════════════════

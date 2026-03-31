@@ -32,6 +32,7 @@ interface AppContextType extends AppState {
   updateChild: (id: string, updates: Partial<Child>) => void;
   addGoal: (goal: Goal) => void;
   updateGoal: (id: string, updates: Partial<Goal>) => void;
+  deleteGoal: (id: string) => void;
   addSession: (session: Session) => void;
   addReport: (report: Report) => void;
   updateReport: (id: string, updates: Partial<Report>) => void;
@@ -114,6 +115,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setState((prev) => ({
       ...prev,
       goals: prev.goals.map((g) => (g.id === id ? { ...g, ...updates } : g)),
+    }));
+  }, []);
+
+  const deleteGoal = useCallback((id: string) => {
+    setState((prev) => ({
+      ...prev,
+      goals: prev.goals.filter((g) => g.id !== id),
     }));
   }, []);
 
@@ -210,6 +218,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         updateChild,
         addGoal,
         updateGoal,
+        deleteGoal,
         addSession,
         addReport,
         updateReport,
