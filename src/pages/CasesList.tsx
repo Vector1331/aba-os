@@ -18,6 +18,7 @@ import {
 } from '@/components/ui/select';
 import { SessionScheduler } from '@/components/SessionScheduler';
 import type { Child } from '@/data/mockData';
+import { THERAPY_AREAS } from '@/data/mockData';
 
 type SortField = 'lastSession' | 'successRate' | 'name';
 type SortDirection = 'asc' | 'desc';
@@ -82,12 +83,23 @@ export default function CasesList() {
     else { setSortField(field); setSortDirection('desc'); }
   };
 
+  const calculateAge = (birthDate: string): number => {
+    const today = new Date();
+    const birth = new Date(birthDate);
+    let age = today.getFullYear() - birth.getFullYear();
+    const m = today.getMonth() - birth.getMonth();
+    if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) age--;
+    return age;
+  };
+
   const handleCreateChild = () => {
     if (!newChild.name || !newChild.concern) return;
+    const age = newChild.birthDate ? calculateAge(newChild.birthDate) : 0;
     const child: Child = {
-      id: `c${Date.now()}`, name: newChild.name, age: newChild.age || 0,
+      id: `c${Date.now()}`, name: newChild.name, age,
       birthDate: newChild.birthDate || new Date().toISOString().split('T')[0],
       concern: newChild.concern, diagnosis: newChild.diagnosis || '',
+      therapyArea: newChild.therapyArea,
       guardianName: newChild.guardianName || '', guardianPhone: newChild.guardianPhone || '',
       guardianRelation: newChild.guardianRelation || '', status: 'active',
       startDate: new Date().toISOString().split('T')[0],
@@ -138,17 +150,25 @@ export default function CasesList() {
               <Input id="name" value={newChild.name || ''} onChange={(e) => setNewChild({ ...newChild, name: e.target.value })} placeholder="홍길동" />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="age">나이</Label>
-              <Input id="age" type="number" value={newChild.age || ''} onChange={(e) => setNewChild({ ...newChild, age: parseInt(e.target.value) })} placeholder="5" />
+              <Label htmlFor="birthDate">생년월일</Label>
+              <Input id="birthDate" type="date" value={newChild.birthDate || ''} onChange={(e) => setNewChild({ ...newChild, birthDate: e.target.value })} />
+              {newChild.birthDate && (
+                <p className="text-xs text-muted-foreground">만 {calculateAge(newChild.birthDate)}세</p>
+              )}
             </div>
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="birthDate">생년월일</Label>
-            <Input id="birthDate" type="date" value={newChild.birthDate || ''} onChange={(e) => setNewChild({ ...newChild, birthDate: e.target.value })} />
           </div>
           <div className="space-y-2">
             <Label htmlFor="concern">주요 관심사 *</Label>
             <Textarea id="concern" value={newChild.concern || ''} onChange={(e) => setNewChild({ ...newChild, concern: e.target.value })} placeholder="언어 발달 지연, 사회적 상호작용 등" />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="therapyArea">치료 영역</Label>
+            <Select value={newChild.therapyArea} onValueChange={(value) => setNewChild({ ...newChild, therapyArea: value as any })}>
+              <SelectTrigger><SelectValue placeholder="치료 영역을 선택하세요" /></SelectTrigger>
+              <SelectContent>
+                {THERAPY_AREAS.map((area) => (<SelectItem key={area} value={area}>{area}</SelectItem>))}
+              </SelectContent>
+            </Select>
           </div>
           <div className="space-y-2">
             <Label htmlFor="diagnosis">진단명</Label>
