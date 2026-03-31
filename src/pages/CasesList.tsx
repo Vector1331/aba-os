@@ -83,12 +83,23 @@ export default function CasesList() {
     else { setSortField(field); setSortDirection('desc'); }
   };
 
+  const calculateAge = (birthDate: string): number => {
+    const today = new Date();
+    const birth = new Date(birthDate);
+    let age = today.getFullYear() - birth.getFullYear();
+    const m = today.getMonth() - birth.getMonth();
+    if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) age--;
+    return age;
+  };
+
   const handleCreateChild = () => {
     if (!newChild.name || !newChild.concern) return;
+    const age = newChild.birthDate ? calculateAge(newChild.birthDate) : 0;
     const child: Child = {
-      id: `c${Date.now()}`, name: newChild.name, age: newChild.age || 0,
+      id: `c${Date.now()}`, name: newChild.name, age,
       birthDate: newChild.birthDate || new Date().toISOString().split('T')[0],
       concern: newChild.concern, diagnosis: newChild.diagnosis || '',
+      therapyArea: newChild.therapyArea,
       guardianName: newChild.guardianName || '', guardianPhone: newChild.guardianPhone || '',
       guardianRelation: newChild.guardianRelation || '', status: 'active',
       startDate: new Date().toISOString().split('T')[0],
