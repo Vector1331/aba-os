@@ -1,5 +1,9 @@
 export type Role = 'admin' | 'therapist' | 'parent';
 
+export type TherapyArea = '감각통합' | '언어' | '행동' | '놀이' | '예술' | '심리운동' | '인지' | '작업' | '기타';
+
+export const THERAPY_AREAS: TherapyArea[] = ['감각통합', '언어', '행동', '놀이', '예술', '심리운동', '인지', '작업', '기타'];
+
 export interface Child {
   id: string;
   name: string;
@@ -7,6 +11,7 @@ export interface Child {
   birthDate: string;
   concern: string;
   diagnosis: string;
+  therapyArea?: TherapyArea;
   guardianName: string;
   guardianPhone: string;
   guardianRelation: string;

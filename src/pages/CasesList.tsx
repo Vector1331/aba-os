@@ -18,6 +18,7 @@ import {
 } from '@/components/ui/select';
 import { SessionScheduler } from '@/components/SessionScheduler';
 import type { Child } from '@/data/mockData';
+import { THERAPY_AREAS } from '@/data/mockData';
 
 type SortField = 'lastSession' | 'successRate' | 'name';
 type SortDirection = 'asc' | 'desc';
