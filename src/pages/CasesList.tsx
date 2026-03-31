@@ -150,17 +150,25 @@ export default function CasesList() {
               <Input id="name" value={newChild.name || ''} onChange={(e) => setNewChild({ ...newChild, name: e.target.value })} placeholder="홍길동" />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="age">나이</Label>
-              <Input id="age" type="number" value={newChild.age || ''} onChange={(e) => setNewChild({ ...newChild, age: parseInt(e.target.value) })} placeholder="5" />
+              <Label htmlFor="birthDate">생년월일</Label>
+              <Input id="birthDate" type="date" value={newChild.birthDate || ''} onChange={(e) => setNewChild({ ...newChild, birthDate: e.target.value })} />
+              {newChild.birthDate && (
+                <p className="text-xs text-muted-foreground">만 {calculateAge(newChild.birthDate)}세</p>
+              )}
             </div>
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="birthDate">생년월일</Label>
-            <Input id="birthDate" type="date" value={newChild.birthDate || ''} onChange={(e) => setNewChild({ ...newChild, birthDate: e.target.value })} />
           </div>
           <div className="space-y-2">
             <Label htmlFor="concern">주요 관심사 *</Label>
             <Textarea id="concern" value={newChild.concern || ''} onChange={(e) => setNewChild({ ...newChild, concern: e.target.value })} placeholder="언어 발달 지연, 사회적 상호작용 등" />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="therapyArea">치료 영역</Label>
+            <Select value={newChild.therapyArea} onValueChange={(value) => setNewChild({ ...newChild, therapyArea: value as any })}>
+              <SelectTrigger><SelectValue placeholder="치료 영역을 선택하세요" /></SelectTrigger>
+              <SelectContent>
+                {THERAPY_AREAS.map((area) => (<SelectItem key={area} value={area}>{area}</SelectItem>))}
+              </SelectContent>
+            </Select>
           </div>
           <div className="space-y-2">
             <Label htmlFor="diagnosis">진단명</Label>
