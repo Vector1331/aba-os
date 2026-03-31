@@ -178,6 +178,7 @@ export function SessionsTab({ childId, sessions, goals }: SessionsTabProps) {
       childId,
       therapistId: therapists[0]?.id || 'th1',
       date: now.toISOString().split('T')[0],
+      startTime: `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`,
       duration: Math.max(duration, 1),
       notes: sessionNotes,
       trialRecords,

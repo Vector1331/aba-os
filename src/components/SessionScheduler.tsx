@@ -105,7 +105,6 @@ export function SessionScheduler() {
 
   const renderSessionBadge = (session: typeof sessions[0], compact = false) => {
     const child = children.find(c => c.id === session.childId);
-    const domains = getSessionDomains(session);
 
     return (
       <button
@@ -115,10 +114,10 @@ export function SessionScheduler() {
           'w-full text-left rounded-md px-1.5 py-0.5 text-[10px] font-medium truncate transition-colors',
           'bg-primary/10 text-primary hover:bg-primary/20 border border-primary/20'
         )}
-        title={`${child?.name}${domains.length > 0 ? ' · ' + domains.join(', ') : ''}`}
+        title={`${child?.name} · ${session.startTime}`}
       >
         {child?.name}
-        {!compact && domains.length > 0 && <span className="ml-1 opacity-60 text-[9px]">{domains[0]}</span>}
+        {!compact && <span className="ml-1 opacity-60 text-[9px]">{session.startTime}</span>}
       </button>
     );
   };
@@ -274,7 +273,6 @@ export function SessionScheduler() {
                       <div className="flex flex-col gap-1 p-1 flex-1">
                         {daySessions.map(s => {
                           const child = children.find(c => c.id === s.childId);
-                          const domains = getSessionDomains(s);
                           return (
                             <button
                               key={s.id}
@@ -282,7 +280,7 @@ export function SessionScheduler() {
                               className="w-full text-left rounded-md px-1.5 py-1 text-[10px] font-medium truncate transition-colors bg-primary/10 text-primary hover:bg-primary/20 border border-primary/20"
                             >
                               <p className="truncate">{child?.name}</p>
-                              <p className="text-[9px] opacity-60 truncate">{s.duration}분{domains.length > 0 ? ` · ${domains[0]}` : ''}</p>
+                              <p className="text-[9px] opacity-60 truncate">{s.startTime} · {s.duration}분</p>
                             </button>
                           );
                         })}
@@ -333,7 +331,7 @@ export function SessionScheduler() {
                                   >
                                     <p className="text-sm font-medium text-foreground">{child?.name}</p>
                                     <p className="text-[11px] text-muted-foreground">
-                                      {session.duration}분
+                                      {session.startTime} · {session.duration}분
                                       {domains.length > 0 && ` · ${domains.join(', ')}`}
                                       {isAdmin && therapist && ` · ${therapist.name}`}
                                     </p>
