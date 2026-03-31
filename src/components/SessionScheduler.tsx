@@ -331,7 +331,7 @@ export function SessionScheduler() {
                                   >
                                     <p className="text-sm font-medium text-foreground">{child?.name}</p>
                                     <p className="text-[11px] text-muted-foreground">
-                                      {session.duration}분
+                                      {session.startTime} · {session.duration}분
                                       {domains.length > 0 && ` · ${domains.join(', ')}`}
                                       {isAdmin && therapist && ` · ${therapist.name}`}
                                     </p>
