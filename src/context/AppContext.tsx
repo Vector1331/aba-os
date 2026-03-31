@@ -218,6 +218,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         updateChild,
         addGoal,
         updateGoal,
+        deleteGoal,
         addSession,
         addReport,
         updateReport,
