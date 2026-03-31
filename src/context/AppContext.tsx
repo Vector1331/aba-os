@@ -32,6 +32,7 @@ interface AppContextType extends AppState {
   updateChild: (id: string, updates: Partial<Child>) => void;
   addGoal: (goal: Goal) => void;
   updateGoal: (id: string, updates: Partial<Goal>) => void;
+  deleteGoal: (id: string) => void;
   addSession: (session: Session) => void;
   addReport: (report: Report) => void;
   updateReport: (id: string, updates: Partial<Report>) => void;
