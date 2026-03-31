@@ -522,17 +522,20 @@ const PROGRAM_STIMULI: Record<string, string[]> = {
 function buildSession(
   id: string, childId: string, therapistId: string, date: string, duration: number, notes: string,
   trialSpecs: { programId: string; total: number; successes: number; promptLevel: number; problemCount: number }[],
+  startTime?: string,
 ): Session {
   const trialRecords: Trial[] = [];
   trialSpecs.forEach(spec => {
     const stimuli = PROGRAM_STIMULI[spec.programId] || ['자극1', '자극2', '자극3'];
     trialRecords.push(...generateTrials(id, spec.programId, spec.total, spec.successes, spec.promptLevel, spec.problemCount, stimuli));
   });
+  // Auto-assign times if not provided: alternate between morning/afternoon slots
+  const defaultTime = startTime || (['10:00', '11:00', '13:30', '14:30', '15:30'][parseInt(id.replace(/\D/g, ''), 10) % 5]);
   return {
-    id, childId, therapistId, date, duration, notes,
+    id, childId, therapistId, date, startTime: defaultTime, duration, notes,
     trialRecords,
     trials: buildAggregatedTrials(trialRecords),
-    createdAt: `${date}T10:00:00`,
+    createdAt: `${date}T${defaultTime}:00`,
   };
 }
 
