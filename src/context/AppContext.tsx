@@ -118,6 +118,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }));
   }, []);
 
+  const deleteGoal = useCallback((id: string) => {
+    setState((prev) => ({
+      ...prev,
+      goals: prev.goals.filter((g) => g.id !== id),
+    }));
+  }, []);
+
   const updateChildTrend = useCallback((childId: string) => {
     setState((prev) => {
       const childSessions = prev.sessions.filter(s => s.childId === childId);
