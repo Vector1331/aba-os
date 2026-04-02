@@ -17,10 +17,7 @@ import {
 
 interface AppState {
   role: Role;
-<<<<<<< HEAD
   currentTherapistId: string;
-=======
->>>>>>> cd8e445276da75daae379d53706c3f23c9dd9241
   children: Child[];
   goals: Goal[];
   sessions: Session[];
@@ -35,15 +32,10 @@ interface AppContextType extends AppState {
   updateChild: (id: string, updates: Partial<Child>) => void;
   addGoal: (goal: Goal) => void;
   updateGoal: (id: string, updates: Partial<Goal>) => void;
-<<<<<<< HEAD
   deleteGoal: (id: string) => void;
   addSession: (session: Session) => void;
   addReport: (report: Report) => void;
   updateReport: (id: string, updates: Partial<Report>) => void;
-=======
-  addSession: (session: Session) => void;
-  addReport: (report: Report) => void;
->>>>>>> cd8e445276da75daae379d53706c3f23c9dd9241
   resetData: () => void;
   getChildById: (id: string) => Child | undefined;
   getGoalsByChildId: (childId: string) => Goal[];
@@ -56,15 +48,10 @@ interface AppContextType extends AppState {
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
-<<<<<<< HEAD
 
 const getInitialState = (): AppState => ({
   role: 'admin',
   currentTherapistId: 'th1',
-=======
-const getInitialState = (): AppState => ({
-  role: 'admin',
->>>>>>> cd8e445276da75daae379d53706c3f23c9dd9241
   children: [...initialChildren],
   goals: [...initialGoals],
   sessions: [...initialSessions],
@@ -131,7 +118,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }));
   }, []);
 
-<<<<<<< HEAD
   const deleteGoal = useCallback((id: string) => {
     setState((prev) => ({
       ...prev,
@@ -139,8 +125,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }));
   }, []);
 
-=======
->>>>>>> cd8e445276da75daae379d53706c3f23c9dd9241
   const updateChildTrend = useCallback((childId: string) => {
     setState((prev) => {
       const childSessions = prev.sessions.filter(s => s.childId === childId);
@@ -180,7 +164,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setState((prev) => ({ ...prev, reports: [...prev.reports, report] }));
   }, []);
 
-<<<<<<< HEAD
   const updateReport = useCallback((id: string, updates: Partial<Report>) => {
     setState((prev) => ({
       ...prev,
@@ -188,8 +171,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }));
   }, []);
 
-=======
->>>>>>> cd8e445276da75daae379d53706c3f23c9dd9241
   const resetData = useCallback(() => {
     setState(getInitialState());
   }, []);
@@ -237,15 +218,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
         updateChild,
         addGoal,
         updateGoal,
-<<<<<<< HEAD
         deleteGoal,
         addSession,
         addReport,
         updateReport,
-=======
-        addSession,
-        addReport,
->>>>>>> cd8e445276da75daae379d53706c3f23c9dd9241
         resetData,
         getChildById,
         getGoalsByChildId,

@@ -1,26 +1,14 @@
 import { NavLink, useLocation } from 'react-router-dom';
-<<<<<<< HEAD
 import { LayoutDashboard, Users, FileText, Settings, Activity, Upload, BarChart3 } from 'lucide-react';
-=======
-import { LayoutDashboard, Users, Calendar, FileText, Settings, Activity, Upload } from 'lucide-react';
->>>>>>> cd8e445276da75daae379d53706c3f23c9dd9241
 import { cn } from '@/lib/utils';
 import { useApp } from '@/context/AppContext';
 
 const navItems = [
-<<<<<<< HEAD
   { to: '/dashboard', icon: LayoutDashboard, label: '대시보드', roles: ['admin'] },
   { to: '/cases', icon: Users, label: '케이스 관리', roles: ['admin', 'therapist'] },
   { to: '/session-summary', icon: BarChart3, label: '세션 요약', roles: ['parent'] },
   { to: '/reports', icon: FileText, label: '진행 리포트', roles: ['admin', 'therapist', 'parent'] },
   { to: '/migration', icon: Upload, label: '데이터 마이그레이션', roles: ['admin', 'therapist'] },
-=======
-  { to: '/', icon: LayoutDashboard, label: '대시보드', roles: ['admin', 'therapist', 'parent'] },
-  { to: '/cases', icon: Users, label: '케이스 (아동)', roles: ['admin', 'therapist', 'parent'] },
-  { to: '/sessions', icon: Calendar, label: '치료 세션', roles: ['admin', 'therapist', 'parent'] },
-  { to: '/reports', icon: FileText, label: '진행 리포트', roles: ['admin', 'therapist', 'parent'] },
-  { to: '/migration', icon: Upload, label: '데이터 마이그레이션', roles: ['admin'] },
->>>>>>> cd8e445276da75daae379d53706c3f23c9dd9241
   { to: '/settings', icon: Settings, label: '설정', roles: ['admin', 'therapist'] },
 ];
 
@@ -38,13 +26,8 @@ export function AppSidebar() {
           <Activity className="h-5 w-5 text-primary-foreground" />
         </div>
         <div>
-<<<<<<< HEAD
           <h1 className="text-lg font-bold text-sidebar-foreground">Dear One</h1>
           <p className="text-xs text-sidebar-muted">발달치료 관리</p>
-=======
-          <h1 className="text-lg font-bold text-sidebar-foreground">ABA OS</h1>
-          <p className="text-xs text-sidebar-muted">치료 관리 시스템</p>
->>>>>>> cd8e445276da75daae379d53706c3f23c9dd9241
         </div>
       </div>
 
@@ -52,14 +35,7 @@ export function AppSidebar() {
       <nav className="flex-1 overflow-y-auto px-3 py-4">
         <ul className="space-y-1">
           {visibleNavItems.map((item) => {
-<<<<<<< HEAD
             const isActive = location.pathname.startsWith(item.to);
-=======
-            const isActive =
-              item.to === '/'
-                ? location.pathname === '/'
-                : location.pathname.startsWith(item.to);
->>>>>>> cd8e445276da75daae379d53706c3f23c9dd9241
 
             return (
               <li key={item.to}>
@@ -82,11 +58,7 @@ export function AppSidebar() {
       {/* Footer */}
       <div className="border-t border-sidebar-border p-4">
         <div className="rounded-lg bg-sidebar-accent/50 p-3">
-<<<<<<< HEAD
           <p className="text-xs font-medium text-sidebar-foreground">아이랑 ABA 행동발달연구소</p>
-=======
-          <p className="text-xs font-medium text-sidebar-foreground">해오름 발달센터</p>
->>>>>>> cd8e445276da75daae379d53706c3f23c9dd9241
           <p className="text-xs text-sidebar-muted">데모 버전 v1.0</p>
         </div>
       </div>

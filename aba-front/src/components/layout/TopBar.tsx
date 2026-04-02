@@ -1,16 +1,9 @@
-<<<<<<< HEAD
 import { Search, RotateCcw, Shield, User, Users, LogIn, LogOut } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useApp } from '@/context/AppContext';
 import { useAuth } from '@/hooks/useAuth';
-=======
-import { Search, RotateCcw, Shield, User, Users } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { useApp } from '@/context/AppContext';
->>>>>>> cd8e445276da75daae379d53706c3f23c9dd9241
 import { cn } from '@/lib/utils';
 import type { Role } from '@/data/mockData';
 
@@ -22,12 +15,8 @@ const roles: { value: Role; label: string; icon: React.ElementType }[] = [
 
 export function TopBar() {
   const { role, setRole, resetData } = useApp();
-<<<<<<< HEAD
   const { session, signOut } = useAuth();
   const navigate = useNavigate();
-=======
-
->>>>>>> cd8e445276da75daae379d53706c3f23c9dd9241
   return (
     <header className="fixed left-64 right-0 top-0 z-30 flex h-16 items-center justify-between border-b border-border bg-background/95 px-6 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       {/* Search */}
@@ -40,7 +29,6 @@ export function TopBar() {
         />
       </div>
 
-<<<<<<< HEAD
       <div className="flex items-center gap-3">
         {/* Login / Logout Button */}
         {session ? (
@@ -65,10 +53,6 @@ export function TopBar() {
           </Button>
         )}
 
-=======
-      {/* Right section */}
-      <div className="flex items-center gap-4">
->>>>>>> cd8e445276da75daae379d53706c3f23c9dd9241
         {/* Role Switcher */}
         <div className="flex items-center gap-1 rounded-lg bg-muted p-1">
           {roles.map((r) => (
