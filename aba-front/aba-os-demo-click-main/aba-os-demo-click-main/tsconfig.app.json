@@ -1,6 +1,5 @@
 {
   "compilerOptions": {
-<<<<<<< HEAD
     "allowImportingTsExtensions": true,
     "isolatedModules": true,
     "jsx": "react-jsx",
@@ -31,7 +30,6 @@
     "src"
   ]
 }
-=======
     "target": "ES2020",
     "useDefineForClassFields": true,
     "lib": ["ES2020", "DOM", "DOM.Iterable"],
@@ -60,4 +58,3 @@
   },
   "include": ["src"]
 }
->>>>>>> cd8e445276da75daae379d53706c3f23c9dd9241
