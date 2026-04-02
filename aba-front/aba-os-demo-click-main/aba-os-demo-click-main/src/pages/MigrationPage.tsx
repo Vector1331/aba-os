@@ -105,15 +105,24 @@ export default function MigrationPage() {
     skipped: number;
   } | null>(null);
 
+<<<<<<< HEAD
   // Admin and therapist can access
   if (role !== 'admin' && role !== 'therapist') {
+=======
+  // Only admin can access
+  if (role !== 'admin') {
+>>>>>>> cd8e445276da75daae379d53706c3f23c9dd9241
     return (
       <div className="flex h-[60vh] items-center justify-center">
         <Card className="max-w-md text-center p-6">
           <AlertTriangle className="h-12 w-12 text-warning mx-auto mb-4" />
           <h2 className="text-lg font-semibold mb-2">접근 권한 없음</h2>
           <p className="text-muted-foreground">
+<<<<<<< HEAD
             데이터 마이그레이션은 센터 관리자 및 치료사만 이용할 수 있습니다.
+=======
+            데이터 마이그레이션은 센터 관리자만 이용할 수 있습니다.
+>>>>>>> cd8e445276da75daae379d53706c3f23c9dd9241
           </p>
         </Card>
       </div>
@@ -223,7 +232,10 @@ export default function MigrationPage() {
           targetCriteria: '',
           createdAt: row.session_date,
           status: 'active',
+<<<<<<< HEAD
           objectiveType: 'STO',
+=======
+>>>>>>> cd8e445276da75daae379d53706c3f23c9dd9241
         });
       }
 
@@ -268,10 +280,15 @@ export default function MigrationPage() {
           childId: child.id,
           therapistId: therapists[0]?.id || 'th1',
           date: row.session_date,
+<<<<<<< HEAD
           startTime: '10:00',
           duration: 50,
           notes: row.session_note || '',
           trialRecords: [],
+=======
+          duration: 50,
+          notes: row.session_note || '',
+>>>>>>> cd8e445276da75daae379d53706c3f23c9dd9241
           trials: [],
           createdAt: new Date().toISOString(),
         };
