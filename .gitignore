@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 *.yml
 !.github/workflows/*.yml
 *.pem
@@ -16,3 +17,29 @@ nul
 docs/CHANGELOG_2026-02-07.md
 2. 기능 정의 및 이력 관리서.xlsx
 3. DB 테이블 및 데이터 정의서.xlsx
+=======
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+node_modules
+dist
+dist-ssr
+*.local
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+>>>>>>> origin/main

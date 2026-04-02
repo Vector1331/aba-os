@@ -1,5 +1,9 @@
 export type Role = 'admin' | 'therapist' | 'parent';
 
+export type TherapyArea = '감각통합' | '언어' | '행동' | '놀이' | '예술' | '심리운동' | '인지' | '작업' | '기타';
+
+export const THERAPY_AREAS: TherapyArea[] = ['감각통합', '언어', '행동', '놀이', '예술', '심리운동', '인지', '작업', '기타'];
+
 export interface Child {
   id: string;
   name: string;
@@ -7,6 +11,7 @@ export interface Child {
   birthDate: string;
   concern: string;
   diagnosis: string;
+  therapyArea?: TherapyArea;
   guardianName: string;
   guardianPhone: string;
   guardianRelation: string;
@@ -16,24 +21,104 @@ export interface Child {
   lastSessionDate: string;
   trend: 'up' | 'down' | 'stable';
   notes: string;
+  estimatedDevAge?: number;
 }
 
-export interface Goal {
+// VB-MAPP developmental levels and domains
+export type VBMAPPLevel = 1 | 2 | 3;
+export type ObjectiveType = 'LTO' | 'STO';
+
+// VB-MAPP domains per level
+export const VBMAPP_DOMAINS: Record<VBMAPPLevel, { key: string; label: string; labelKo: string }[]> = {
+  1: [
+    { key: 'mand', label: 'Mand', labelKo: '맨드(요구하기)' },
+    { key: 'tact', label: 'Tact', labelKo: '택트(명명하기)' },
+    { key: 'listener', label: 'Listener Responding', labelKo: '청자반응(변별하기)' },
+    { key: 'vp_mts', label: 'VP-MTS', labelKo: '시각/매칭(시지각)' },
+    { key: 'play', label: 'Play', labelKo: '놀이' },
+    { key: 'social', label: 'Social', labelKo: '사회성' },
+    { key: 'imitation', label: 'Motor Imitation', labelKo: '모방(동작 모방)' },
+    { key: 'echoic', label: 'Echoic', labelKo: '에코익(따라 말하기)' },
+  ],
+  2: [
+    { key: 'mand', label: 'Mand', labelKo: '맨드(요구하기)' },
+    { key: 'tact', label: 'Tact', labelKo: '택트(명명하기)' },
+    { key: 'listener', label: 'Listener Responding', labelKo: '청자반응(변별하기)' },
+    { key: 'vp_mts', label: 'VP-MTS', labelKo: '시각/매칭(시지각)' },
+    { key: 'play', label: 'Play', labelKo: '놀이' },
+    { key: 'social', label: 'Social', labelKo: '사회성' },
+    { key: 'imitation', label: 'Motor Imitation', labelKo: '모방(동작 모방)' },
+    { key: 'echoic', label: 'Echoic', labelKo: '에코익(따라 말하기)' },
+    { key: 'lrffc', label: 'LRFFC', labelKo: 'LRFFC(기능/부류/특징)' },
+    { key: 'intraverbal', label: 'Intraverbal', labelKo: '인트라버벌(대화)' },
+    { key: 'group', label: 'Group Skills', labelKo: '집단기술' },
+  ],
+  3: [
+    { key: 'mand', label: 'Mand', labelKo: '맨드(요구하기)' },
+    { key: 'tact', label: 'Tact', labelKo: '택트(명명하기)' },
+    { key: 'listener', label: 'Listener Responding', labelKo: '청자반응(변별하기)' },
+    { key: 'vp_mts', label: 'VP-MTS', labelKo: '시각/매칭(시지각)' },
+    { key: 'play', label: 'Play', labelKo: '놀이' },
+    { key: 'social', label: 'Social', labelKo: '사회성' },
+    { key: 'reading', label: 'Reading', labelKo: '읽기' },
+    { key: 'writing', label: 'Writing', labelKo: '쓰기' },
+    { key: 'lrffc', label: 'LRFFC', labelKo: 'LRFFC(기능/부류/특징)' },
+    { key: 'intraverbal', label: 'Intraverbal', labelKo: '인트라버벌(대화)' },
+    { key: 'group', label: 'Group Skills', labelKo: '집단기술' },
+    { key: 'math', label: 'Math', labelKo: '수학' },
+  ],
+};
+
+// Helper to get domain label
+export function getDomainLabel(domainKey: string): string {
+  for (const level of [1, 2, 3] as VBMAPPLevel[]) {
+    const found = VBMAPP_DOMAINS[level].find(d => d.key === domainKey);
+    if (found) return found.labelKo;
+  }
+  return domainKey;
+}
+
+// Program = Goal (ABA terminology)
+export interface Program {
   id: string;
   childId: string;
   title: string;
   description: string;
-  category: string;
+  category: string; // legacy - mapped to domain
   targetCriteria: string;
   createdAt: string;
   status: 'active' | 'mastered' | 'paused';
+  // VB-MAPP fields
+  vbmappLevel?: VBMAPPLevel;
+  domain?: string;
+  objectiveType: ObjectiveType;
+  parentProgramId?: string; // STO links to LTO
 }
 
+// Keep Goal as alias for backward compat
+export type Goal = Program;
+
+// Individual trial record (behavioral unit)
+export interface Trial {
+  id: string;
+  sessionId: string;
+  programId: string;
+  trialOrder: number;
+  stimulus: string;   // what was presented
+  response: string;   // what child did
+  result: 'correct' | 'incorrect' | 'no_response';
+  promptLevel: number; // 0=independent, 1=gestural, 2=verbal, 3=partial_physical, 4=full_physical
+  latencySeconds?: number;
+  problemBehavior: boolean;
+  notes?: string;
+}
+
+// Legacy aggregated trial (for backward compat during transition)
 export interface SessionTrial {
   goalId: string;
   trials: number;
   successes: number;
-  promptLevel: number; // 0-3 (0: 독립, 1: 언어촉진, 2: 부분신체, 3: 전체신체)
+  promptLevel: number;
   problemBehaviorCount: number;
 }
 
@@ -42,8 +127,12 @@ export interface Session {
   childId: string;
   therapistId: string;
   date: string;
-  duration: number; // minutes
+  startTime: string; // e.g. "10:00"
+  duration: number;
   notes: string;
+  // Trial-centric: individual trials
+  trialRecords: Trial[];
+  // Legacy aggregated (computed from trialRecords)
   trials: SessionTrial[];
   createdAt: string;
 }
@@ -79,180 +168,574 @@ export interface CenterProfile {
   establishedDate: string;
 }
 
-// Initial mock data
+// Prompt level labels (5-level)
+export const promptLevelLabels = ['독립', '제스처', '언어촉진', '부분신체', '전체신체'];
+
+// Helper: aggregate trials into SessionTrial format for backward compat
+export function aggregateTrials(trials: Trial[], programId: string): SessionTrial {
+  const programTrials = trials.filter(t => t.programId === programId);
+  const total = programTrials.length;
+  const successes = programTrials.filter(t => t.result === 'correct').length;
+  const avgPrompt = total > 0 ? Math.round(programTrials.reduce((a, t) => a + t.promptLevel, 0) / total) : 0;
+  const problemCount = programTrials.filter(t => t.problemBehavior).length;
+  return { goalId: programId, trials: total, successes, promptLevel: avgPrompt, problemBehaviorCount: problemCount };
+}
+
+// Helper: build aggregated trials array from trialRecords
+export function buildAggregatedTrials(trialRecords: Trial[]): SessionTrial[] {
+  const programIds = [...new Set(trialRecords.map(t => t.programId))];
+  return programIds.map(pid => aggregateTrials(trialRecords, pid));
+}
+
+// Helper: get unique stimuli that were mastered (>= 80% correct across all sessions)
+export function getMasteredStimuli(allTrials: Trial[], programId: string): string[] {
+  const programTrials = allTrials.filter(t => t.programId === programId && t.stimulus);
+  const stimuliMap = new Map<string, { correct: number; total: number }>();
+  programTrials.forEach(t => {
+    const existing = stimuliMap.get(t.stimulus) || { correct: 0, total: 0 };
+    existing.total++;
+    if (t.result === 'correct') existing.correct++;
+    stimuliMap.set(t.stimulus, existing);
+  });
+  return Array.from(stimuliMap.entries())
+    .filter(([, v]) => v.total >= 2 && (v.correct / v.total) >= 0.8)
+    .map(([k]) => k);
+}
+
+// Helper: get stimulus-level mastery breakdown
+export function getStimulusMastery(allTrials: Trial[], programId: string): { stimulus: string; rate: number; total: number }[] {
+  const programTrials = allTrials.filter(t => t.programId === programId && t.stimulus);
+  const stimuliMap = new Map<string, { correct: number; total: number }>();
+  programTrials.forEach(t => {
+    const existing = stimuliMap.get(t.stimulus) || { correct: 0, total: 0 };
+    existing.total++;
+    if (t.result === 'correct') existing.correct++;
+    stimuliMap.set(t.stimulus, existing);
+  });
+  return Array.from(stimuliMap.entries())
+    .map(([stimulus, v]) => ({ stimulus, rate: Math.round((v.correct / v.total) * 100), total: v.total }))
+    .sort((a, b) => b.rate - a.rate);
+}
+
+// ===== MOCK DATA =====
+
 export const initialTherapists: Therapist[] = [
   { id: 'th1', name: '김민지', email: 'minji@abaos.kr', phone: '010-1234-5678', specialization: '언어/의사소통', caseCount: 5 },
-  { id: 'th2', name: '이준혁', email: 'junhyuk@abaos.kr', phone: '010-2345-6789', specialization: '사회성/놀이', caseCount: 4 },
-  { id: 'th3', name: '박서연', email: 'seoyeon@abaos.kr', phone: '010-3456-7890', specialization: '자조기술/일상생활', caseCount: 3 },
+  { id: 'th2', name: '이준혁', email: 'junhyuk@abaos.kr', phone: '010-2345-6789', specialization: '사회성/놀이', caseCount: 3 },
+  { id: 'th3', name: '박서연', email: 'seoyeon@abaos.kr', phone: '010-3456-7890', specialization: '자조기술/일상생활', caseCount: 2 },
 ];
 
 export const initialChildren: Child[] = [
   {
-    id: 'c1',
-    name: '김하늘',
-    age: 5,
-    birthDate: '2020-03-15',
-    concern: '언어 발달 지연, 사회적 상호작용 어려움',
-    diagnosis: '자폐 스펙트럼 장애 (ASD Level 1)',
-    guardianName: '김영희',
-    guardianPhone: '010-1111-2222',
-    guardianRelation: '어머니',
-    status: 'active',
-    startDate: '2024-09-01',
-    therapistId: 'th1',
-    lastSessionDate: '2025-01-03',
-    trend: 'up',
-    notes: '최근 눈맞춤 빈도 증가, 단어 사용량 향상',
+    id: 'c1', name: '김하늘', age: 5, birthDate: '2020-03-15',
+    concern: '언어 발달 지연, 사회적 상호작용 어려움', diagnosis: '자폐 스펙트럼 장애 (ASD Level 1)',
+    guardianName: '김영희', guardianPhone: '010-1111-2222', guardianRelation: '어머니',
+    status: 'active', startDate: '2024-09-01', therapistId: 'th1',
+    lastSessionDate: '2025-01-03', trend: 'up',
+    notes: '최근 눈맞춤 빈도 증가, 단어 사용량 향상', estimatedDevAge: 42,
   },
   {
-    id: 'c2',
-    name: '이서준',
-    age: 4,
-    birthDate: '2021-07-22',
-    concern: '반복적 행동, 감각 민감성',
-    diagnosis: '자폐 스펙트럼 장애 (ASD Level 2)',
-    guardianName: '이민수',
-    guardianPhone: '010-3333-4444',
-    guardianRelation: '아버지',
-    status: 'active',
-    startDate: '2024-10-15',
-    therapistId: 'th2',
-    lastSessionDate: '2025-01-02',
-    trend: 'stable',
-    notes: '감각 조절 활동에 긍정적 반응',
+    id: 'c4', name: '최유진', age: 5, birthDate: '2020-06-10',
+    concern: '언어 발달 지연, 단어 모방 어려움', diagnosis: '발달 지연 (언어)',
+    guardianName: '최지혜', guardianPhone: '010-4444-1111', guardianRelation: '어머니',
+    status: 'active', startDate: '2024-11-01', therapistId: 'th1',
+    lastSessionDate: '2025-01-04', trend: 'up',
+    notes: '단어 모방 정확도 향상 중', estimatedDevAge: 40,
   },
   {
-    id: 'c3',
-    name: '박지우',
-    age: 6,
-    birthDate: '2019-11-08',
-    concern: '또래 상호작용 어려움, 일상생활 자립',
-    diagnosis: '자폐 스펙트럼 장애 (ASD Level 1)',
-    guardianName: '박수현',
-    guardianPhone: '010-5555-6666',
-    guardianRelation: '어머니',
-    status: 'active',
-    startDate: '2024-06-01',
-    therapistId: 'th3',
-    lastSessionDate: '2024-12-28',
-    trend: 'down',
-    notes: '최근 세션 참여도 저하, 전환 활동에서 어려움',
+    id: 'c5', name: '정민호', age: 6, birthDate: '2019-09-25',
+    concern: '사회성 발달 지연, 또래 관계 어려움', diagnosis: '자폐 스펙트럼 장애 (ASD Level 1)',
+    guardianName: '정현우', guardianPhone: '010-5555-1111', guardianRelation: '아버지',
+    status: 'active', startDate: '2024-08-01', therapistId: 'th1',
+    lastSessionDate: '2025-01-02', trend: 'stable',
+    notes: '또래 상호작용 빈도 유지 중', estimatedDevAge: 52,
+  },
+  {
+    id: 'c6', name: '한소율', age: 4, birthDate: '2021-02-14',
+    concern: '의사소통 의도 부족, 제한된 어휘', diagnosis: '표현 언어 장애',
+    guardianName: '한미영', guardianPhone: '010-6666-1111', guardianRelation: '어머니',
+    status: 'active', startDate: '2024-12-01', therapistId: 'th1',
+    lastSessionDate: '2025-01-03', trend: 'up',
+    notes: '의사소통 의도 표현 증가', estimatedDevAge: 30,
+  },
+  {
+    id: 'c7', name: '오태양', age: 3, birthDate: '2022-05-20',
+    concern: '전반적 발달 지연', diagnosis: '전반적 발달 지연 (GDD)',
+    guardianName: '오지훈', guardianPhone: '010-7777-1111', guardianRelation: '아버지',
+    status: 'pending', startDate: '2025-01-10', therapistId: 'th1',
+    lastSessionDate: '', trend: 'stable',
+    notes: '초기 평가 예정', estimatedDevAge: 24,
+  },
+  {
+    id: 'c2', name: '이서준', age: 4, birthDate: '2021-07-22',
+    concern: '반복적 행동, 감각 민감성', diagnosis: '자폐 스펙트럼 장애 (ASD Level 2)',
+    guardianName: '이민수', guardianPhone: '010-3333-4444', guardianRelation: '아버지',
+    status: 'active', startDate: '2024-10-15', therapistId: 'th2',
+    lastSessionDate: '2025-01-02', trend: 'stable',
+    notes: '감각 조절 활동에 긍정적 반응', estimatedDevAge: 28,
+  },
+  {
+    id: 'c8', name: '윤서아', age: 5, birthDate: '2020-11-03',
+    concern: '놀이 기술 부족, 상상 놀이 어려움', diagnosis: '자폐 스펙트럼 장애 (ASD Level 1)',
+    guardianName: '윤재호', guardianPhone: '010-8888-1111', guardianRelation: '아버지',
+    status: 'active', startDate: '2024-07-15', therapistId: 'th2',
+    lastSessionDate: '2025-01-04', trend: 'up',
+    notes: '상징 놀이 빈도 증가', estimatedDevAge: 38,
+  },
+  {
+    id: 'c9', name: '강도윤', age: 7, birthDate: '2018-08-12',
+    concern: '감정 조절 어려움, 공격 행동', diagnosis: '자폐 스펙트럼 장애 (ASD Level 2)',
+    guardianName: '강수진', guardianPhone: '010-9999-1111', guardianRelation: '어머니',
+    status: 'inactive', startDate: '2024-03-01', therapistId: 'th2',
+    lastSessionDate: '2024-11-30', trend: 'down',
+    notes: '치료 일시 중단 (가정 사정)', estimatedDevAge: 58,
+  },
+  {
+    id: 'c3', name: '박지우', age: 6, birthDate: '2019-11-08',
+    concern: '또래 상호작용 어려움, 일상생활 자립', diagnosis: '자폐 스펙트럼 장애 (ASD Level 1)',
+    guardianName: '박수현', guardianPhone: '010-5555-6666', guardianRelation: '어머니',
+    status: 'active', startDate: '2024-06-01', therapistId: 'th3',
+    lastSessionDate: '2024-12-28', trend: 'down',
+    notes: '최근 세션 참여도 저하, 전환 활동에서 어려움', estimatedDevAge: 54,
+  },
+  {
+    id: 'c10', name: '신예린', age: 5, birthDate: '2020-12-30',
+    concern: '자조기술 부족, 식사/착탈의 어려움', diagnosis: '발달 지연 (적응행동)',
+    guardianName: '신동혁', guardianPhone: '010-1010-1111', guardianRelation: '아버지',
+    status: 'active', startDate: '2024-09-15', therapistId: 'th3',
+    lastSessionDate: '2025-01-03', trend: 'stable',
+    notes: '자조기술 단계적 향상 중', estimatedDevAge: 44,
   },
 ];
 
-export const initialGoals: Goal[] = [
-  // 김하늘 goals - showing improvement
-  { id: 'g1', childId: 'c1', title: '요청하기', description: '원하는 물건/활동을 언어로 요청하기', category: '의사소통', targetCriteria: '5회 연속 80% 이상 성공', createdAt: '2024-09-01', status: 'active' },
-  { id: 'g2', childId: 'c1', title: '눈맞춤 유지', description: '대화 시 3초 이상 눈맞춤 유지하기', category: '사회성', targetCriteria: '10회 시도 중 8회 성공', createdAt: '2024-09-01', status: 'active' },
-  { id: 'g3', childId: 'c1', title: '지시 따르기', description: '1단계 언어 지시 따르기', category: '수용언어', targetCriteria: '5회 연속 90% 이상 성공', createdAt: '2024-09-15', status: 'active' },
-  
-  // 이서준 goals - stable
-  { id: 'g4', childId: 'c2', title: '차례 기다리기', description: '놀이 상황에서 차례 기다리기', category: '사회성', targetCriteria: '3분 이상 적절히 기다리기', createdAt: '2024-10-15', status: 'active' },
-  { id: 'g5', childId: 'c2', title: '감각 조절', description: '다양한 촉감에 적응하기', category: '감각통합', targetCriteria: '새로운 촉감 5개 이상 수용', createdAt: '2024-10-15', status: 'active' },
-  { id: 'g6', childId: 'c2', title: '모방하기', description: '간단한 동작 모방하기', category: '놀이', targetCriteria: '5회 연속 80% 이상 성공', createdAt: '2024-11-01', status: 'active' },
-  
-  // 박지우 goals - showing regression
-  { id: 'g7', childId: 'c3', title: '또래 인사하기', description: '또래에게 먼저 인사하기', category: '사회성', targetCriteria: '하루 3회 이상 자발적 인사', createdAt: '2024-06-01', status: 'active' },
-  { id: 'g8', childId: 'c3', title: '혼자 양치하기', description: '감독 하에 혼자 양치하기', category: '자조기술', targetCriteria: '모든 단계 독립적 수행', createdAt: '2024-06-01', status: 'active' },
-  { id: 'g9', childId: 'c3', title: '전환 적응', description: '활동 전환 시 적절히 대처하기', category: '행동', targetCriteria: '문제행동 없이 전환 5회 연속', createdAt: '2024-07-01', status: 'active' },
+export const initialGoals: Program[] = [
+  // ═══════════════════════════════════════
+  // 김하늘 (c1) - Level 1
+  // ═══════════════════════════════════════
+
+  // LTO: 맨드
+  { id: 'g1-lto', childId: 'c1', title: '맨드(요구하기)', description: '아동이 원하는 품목이나 활동을 요구할 때, 단어, 수화 혹은 그림선택을 사용할 수 있다.', category: '맨드', targetCriteria: '', createdAt: '2024-09-01', status: 'active', vbmappLevel: 1, domain: 'mand', objectiveType: 'LTO' },
+  { id: 'g1', childId: 'c1', title: '요청하기', description: '신체적 촉구 없이 2개의 단어/수화/그림선택으로 원하는 품목이나 활동을 요구할 수 있다.', category: '맨드', targetCriteria: '5회 연속 80% 이상 성공', createdAt: '2024-09-01', status: 'active', vbmappLevel: 1, domain: 'mand', objectiveType: 'STO', parentProgramId: 'g1-lto' },
+  { id: 'g1b', childId: 'c1', title: '거부 표현하기', description: '원치 않는 품목이나 활동을 적절히 거부(말/수화/고개)할 수 있다.', category: '맨드', targetCriteria: '5회 연속 독립 수행', createdAt: '2024-09-15', status: 'active', vbmappLevel: 1, domain: 'mand', objectiveType: 'STO', parentProgramId: 'g1-lto' },
+  { id: 'g1c', childId: 'c1', title: '도움 요청하기', description: '"도와주세요"라고 자발적으로 요청할 수 있다.', category: '맨드', targetCriteria: '3회 연속 자발적 표현', createdAt: '2024-10-01', status: 'active', vbmappLevel: 1, domain: 'mand', objectiveType: 'STO', parentProgramId: 'g1-lto' },
+
+  // LTO: 택트
+  { id: 'g1d-lto', childId: 'c1', title: '택트(명명하기)', description: '주변 환경의 사물, 사람, 동작을 보고 이름을 말할 수 있다.', category: '택트', targetCriteria: '', createdAt: '2024-09-01', status: 'active', vbmappLevel: 1, domain: 'tact', objectiveType: 'LTO' },
+  { id: 'g1d', childId: 'c1', title: '사물 명명하기', description: '일상 사물 10개를 보고 이름을 말할 수 있다.', category: '택트', targetCriteria: '10개 중 8개 정확', createdAt: '2024-09-01', status: 'active', vbmappLevel: 1, domain: 'tact', objectiveType: 'STO', parentProgramId: 'g1d-lto' },
+  { id: 'g1e', childId: 'c1', title: '동작 명명하기', description: '기본 동작(먹다, 자다, 놀다 등)을 보고 말할 수 있다.', category: '택트', targetCriteria: '5개 동작 80% 정확', createdAt: '2024-10-01', status: 'active', vbmappLevel: 1, domain: 'tact', objectiveType: 'STO', parentProgramId: 'g1d-lto' },
+
+  // LTO: 사회성
+  { id: 'g2-lto', childId: 'c1', title: '사회성', description: '또래 및 성인과의 사회적 상호작용에서 적절한 행동을 보일 수 있다.', category: '사회성', targetCriteria: '', createdAt: '2024-09-01', status: 'active', vbmappLevel: 1, domain: 'social', objectiveType: 'LTO' },
+  { id: 'g2', childId: 'c1', title: '눈맞춤 유지', description: '대화 시 3초 이상 눈맞춤 유지하기', category: '사회성', targetCriteria: '10회 시도 중 8회 성공', createdAt: '2024-09-01', status: 'active', vbmappLevel: 1, domain: 'social', objectiveType: 'STO', parentProgramId: 'g2-lto' },
+  { id: 'g2b', childId: 'c1', title: '인사하기', description: '성인이나 또래에게 적절하게 인사(안녕/안녕하세요)할 수 있다.', category: '사회성', targetCriteria: '하루 3회 자발적 인사', createdAt: '2024-09-15', status: 'active', vbmappLevel: 1, domain: 'social', objectiveType: 'STO', parentProgramId: 'g2-lto' },
+
+  // LTO: 청자반응
+  { id: 'g3-lto', childId: 'c1', title: '청자반응(변별하기)', description: '언어적 지시에 따라 적절한 행동을 수행할 수 있다.', category: '청자반응', targetCriteria: '', createdAt: '2024-09-15', status: 'active', vbmappLevel: 1, domain: 'listener', objectiveType: 'LTO' },
+  { id: 'g3', childId: 'c1', title: '지시 따르기', description: '1단계 언어 지시 따르기', category: '청자반응', targetCriteria: '5회 연속 90% 이상 성공', createdAt: '2024-09-15', status: 'active', vbmappLevel: 1, domain: 'listener', objectiveType: 'STO', parentProgramId: 'g3-lto' },
+  { id: 'g3b', childId: 'c1', title: '사물 변별하기', description: '"공 줘", "컵 줘" 등 사물을 듣고 올바르게 선택할 수 있다.', category: '청자반응', targetCriteria: '10개 사물 중 8개 정확', createdAt: '2024-10-01', status: 'active', vbmappLevel: 1, domain: 'listener', objectiveType: 'STO', parentProgramId: 'g3-lto' },
+
+  // LTO: 모방
+  { id: 'g1f-lto', childId: 'c1', title: '모방(동작 모방)', description: '타인의 대근육/소근육 동작을 관찰하고 모방할 수 있다.', category: '모방', targetCriteria: '', createdAt: '2024-10-01', status: 'active', vbmappLevel: 1, domain: 'imitation', objectiveType: 'LTO' },
+  { id: 'g1f', childId: 'c1', title: '대근육 동작 모방', description: '박수, 만세, 점프 등 대근육 동작 모방하기', category: '모방', targetCriteria: '5개 동작 80% 정확', createdAt: '2024-10-01', status: 'active', vbmappLevel: 1, domain: 'imitation', objectiveType: 'STO', parentProgramId: 'g1f-lto' },
+  { id: 'g1g', childId: 'c1', title: '소근육 동작 모방', description: '손가락 동작, 그리기 등 소근육 모방하기', category: '모방', targetCriteria: '3개 동작 80% 정확', createdAt: '2024-10-15', status: 'active', vbmappLevel: 1, domain: 'imitation', objectiveType: 'STO', parentProgramId: 'g1f-lto' },
+
+  // LTO: 에코익
+  { id: 'g1h-lto', childId: 'c1', title: '에코익(따라 말하기)', description: '치료사의 음성 모델을 정확하게 따라 말할 수 있다.', category: '에코익', targetCriteria: '', createdAt: '2024-10-01', status: 'active', vbmappLevel: 1, domain: 'echoic', objectiveType: 'LTO' },
+  { id: 'g1h', childId: 'c1', title: '단음절 따라하기', description: '단음절 소리를 정확하게 따라 말할 수 있다.', category: '에코익', targetCriteria: '10회 중 8회 정확', createdAt: '2024-10-01', status: 'mastered', vbmappLevel: 1, domain: 'echoic', objectiveType: 'STO', parentProgramId: 'g1h-lto' },
+  { id: 'g1i', childId: 'c1', title: '2음절 단어 따라하기', description: '2음절 단어(사과, 바나나 등)를 정확하게 따라 말할 수 있다.', category: '에코익', targetCriteria: '10회 중 8회 정확', createdAt: '2024-11-01', status: 'active', vbmappLevel: 1, domain: 'echoic', objectiveType: 'STO', parentProgramId: 'g1h-lto' },
+
+  // ═══════════════════════════════════════
+  // 이서준 (c2) - Level 1
+  // ═══════════════════════════════════════
+
+  { id: 'g4-lto', childId: 'c2', title: '사회성', description: '또래와의 상호작용에서 적절한 사회적 행동을 보일 수 있다.', category: '사회성', targetCriteria: '', createdAt: '2024-10-15', status: 'active', vbmappLevel: 1, domain: 'social', objectiveType: 'LTO' },
+  { id: 'g4', childId: 'c2', title: '차례 기다리기', description: '놀이 상황에서 차례 기다리기', category: '사회성', targetCriteria: '3분 이상 적절히 기다리기', createdAt: '2024-10-15', status: 'active', vbmappLevel: 1, domain: 'social', objectiveType: 'STO', parentProgramId: 'g4-lto' },
+  { id: 'g4b', childId: 'c2', title: '함께 놀이하기', description: '또래와 5분 이상 협동 놀이 참여하기', category: '사회성', targetCriteria: '3회 연속 5분 이상', createdAt: '2024-11-01', status: 'active', vbmappLevel: 1, domain: 'social', objectiveType: 'STO', parentProgramId: 'g4-lto' },
+
+  { id: 'g5-lto', childId: 'c2', title: '시각/매칭(시지각)', description: '시각적 자극을 변별하고 매칭할 수 있다.', category: '시지각', targetCriteria: '', createdAt: '2024-10-15', status: 'active', vbmappLevel: 1, domain: 'vp_mts', objectiveType: 'LTO' },
+  { id: 'g5', childId: 'c2', title: '감각 조절', description: '다양한 촉감에 적응하기', category: '시지각', targetCriteria: '새로운 촉감 5개 이상 수용', createdAt: '2024-10-15', status: 'active', vbmappLevel: 1, domain: 'vp_mts', objectiveType: 'STO', parentProgramId: 'g5-lto' },
+  { id: 'g5b', childId: 'c2', title: '동일 사물 매칭', description: '동일한 사물끼리 짝짓기', category: '시지각', targetCriteria: '10쌍 중 8쌍 정확', createdAt: '2024-11-01', status: 'active', vbmappLevel: 1, domain: 'vp_mts', objectiveType: 'STO', parentProgramId: 'g5-lto' },
+
+  { id: 'g6-lto', childId: 'c2', title: '모방(동작 모방)', description: '타인의 동작을 관찰하고 모방할 수 있다.', category: '모방', targetCriteria: '', createdAt: '2024-11-01', status: 'active', vbmappLevel: 1, domain: 'imitation', objectiveType: 'LTO' },
+  { id: 'g6', childId: 'c2', title: '모방하기', description: '간단한 동작 모방하기', category: '모방', targetCriteria: '5회 연속 80% 이상 성공', createdAt: '2024-11-01', status: 'active', vbmappLevel: 1, domain: 'imitation', objectiveType: 'STO', parentProgramId: 'g6-lto' },
+
+  { id: 'g6b-lto', childId: 'c2', title: '놀이', description: '다양한 장난감과 놀이 활동에 기능적으로 참여할 수 있다.', category: '놀이', targetCriteria: '', createdAt: '2024-11-15', status: 'active', vbmappLevel: 1, domain: 'play', objectiveType: 'LTO' },
+  { id: 'g6b', childId: 'c2', title: '기능적 놀이', description: '장난감을 용도에 맞게 사용하기(자동차 굴리기, 블록 쌓기)', category: '놀이', targetCriteria: '5개 장난감 독립 사용', createdAt: '2024-11-15', status: 'active', vbmappLevel: 1, domain: 'play', objectiveType: 'STO', parentProgramId: 'g6b-lto' },
+  { id: 'g6c', childId: 'c2', title: '독립 놀이 유지', description: '감독 하에 10분 이상 독립적으로 놀이 활동 유지하기', category: '놀이', targetCriteria: '3회 연속 10분 이상', createdAt: '2024-12-01', status: 'active', vbmappLevel: 1, domain: 'play', objectiveType: 'STO', parentProgramId: 'g6b-lto' },
+
+  // 완료된 목표 (c2)
+  { id: 'g6d-lto', childId: 'c2', title: '에코익(따라 말하기)', description: '치료사의 음성 모델을 따라 말할 수 있다.', category: '에코익', targetCriteria: '', createdAt: '2024-10-01', status: 'mastered', vbmappLevel: 1, domain: 'echoic', objectiveType: 'LTO' },
+  { id: 'g6d', childId: 'c2', title: '단음절 따라하기', description: '단음절 소리를 정확하게 따라 말할 수 있다.', category: '에코익', targetCriteria: '10회 중 8회 정확', createdAt: '2024-10-01', status: 'mastered', vbmappLevel: 1, domain: 'echoic', objectiveType: 'STO', parentProgramId: 'g6d-lto' },
+  { id: 'g6e', childId: 'c2', title: '간단한 인사하기', description: '안녕이라고 말할 수 있다.', category: '사회성', targetCriteria: '5회 연속 자발적 인사', createdAt: '2024-10-15', status: 'mastered', vbmappLevel: 1, domain: 'social', objectiveType: 'STO', parentProgramId: 'g4-lto' },
+
+  // ═══════════════════════════════════════
+  // 박지우 (c3) - Level 2
+  // ═══════════════════════════════════════
+
+  { id: 'g7-lto', childId: 'c3', title: '사회성', description: '또래와의 다양한 사회적 상황에서 적절한 행동을 할 수 있다.', category: '사회성', targetCriteria: '', createdAt: '2024-06-01', status: 'active', vbmappLevel: 2, domain: 'social', objectiveType: 'LTO' },
+  { id: 'g7', childId: 'c3', title: '또래 인사하기', description: '또래에게 먼저 인사하기', category: '사회성', targetCriteria: '하루 3회 이상 자발적 인사', createdAt: '2024-06-01', status: 'active', vbmappLevel: 2, domain: 'social', objectiveType: 'STO', parentProgramId: 'g7-lto' },
+  { id: 'g8', childId: 'c3', title: '혼자 양치하기', description: '감독 하에 혼자 양치하기', category: '사회성', targetCriteria: '모든 단계 독립적 수행', createdAt: '2024-06-01', status: 'active', vbmappLevel: 2, domain: 'social', objectiveType: 'STO', parentProgramId: 'g7-lto' },
+  { id: 'g7b', childId: 'c3', title: '감정 공유하기', description: '또래에게 자신의 감정을 적절히 표현할 수 있다.', category: '사회성', targetCriteria: '하루 2회 자발적 감정 표현', createdAt: '2024-07-01', status: 'active', vbmappLevel: 2, domain: 'social', objectiveType: 'STO', parentProgramId: 'g7-lto' },
+
+  { id: 'g9-lto', childId: 'c3', title: '집단기술', description: '집단 활동에서 적절한 전환과 참여를 할 수 있다.', category: '집단기술', targetCriteria: '', createdAt: '2024-07-01', status: 'active', vbmappLevel: 2, domain: 'group', objectiveType: 'LTO' },
+  { id: 'g9', childId: 'c3', title: '전환 적응', description: '활동 전환 시 적절히 대처하기', category: '집단기술', targetCriteria: '문제행동 없이 전환 5회 연속', createdAt: '2024-07-01', status: 'active', vbmappLevel: 2, domain: 'group', objectiveType: 'STO', parentProgramId: 'g9-lto' },
+  { id: 'g9b', childId: 'c3', title: '집단 지시 따르기', description: '소집단(3~5명) 활동에서 교사의 지시를 따를 수 있다.', category: '집단기술', targetCriteria: '5회 연속 80% 이상', createdAt: '2024-08-01', status: 'active', vbmappLevel: 2, domain: 'group', objectiveType: 'STO', parentProgramId: 'g9-lto' },
+
+  { id: 'g9c-lto', childId: 'c3', title: 'LRFFC(기능/부류/특징)', description: '사물의 기능, 부류, 특징에 따라 올바르게 변별할 수 있다.', category: 'LRFFC', targetCriteria: '', createdAt: '2024-08-01', status: 'active', vbmappLevel: 2, domain: 'lrffc', objectiveType: 'LTO' },
+  { id: 'g9c', childId: 'c3', title: '기능으로 변별하기', description: '"타는 것" 들으면 자동차를 선택할 수 있다.', category: 'LRFFC', targetCriteria: '10개 기능 중 8개 정확', createdAt: '2024-08-01', status: 'active', vbmappLevel: 2, domain: 'lrffc', objectiveType: 'STO', parentProgramId: 'g9c-lto' },
+  { id: 'g9d', childId: 'c3', title: '부류로 변별하기', description: '"과일" 들으면 사과를 선택할 수 있다.', category: 'LRFFC', targetCriteria: '5개 부류 80% 정확', createdAt: '2024-09-01', status: 'active', vbmappLevel: 2, domain: 'lrffc', objectiveType: 'STO', parentProgramId: 'g9c-lto' },
+
+  { id: 'g9e-lto', childId: 'c3', title: '인트라버벌(대화)', description: '간단한 질문에 적절하게 대답할 수 있다.', category: '인트라버벌', targetCriteria: '', createdAt: '2024-09-01', status: 'active', vbmappLevel: 2, domain: 'intraverbal', objectiveType: 'LTO' },
+  { id: 'g9e', childId: 'c3', title: '빈칸 채우기', description: '"사과는 ___이다"(과일) 빈칸 채워 대답하기', category: '인트라버벌', targetCriteria: '10문항 중 8개 정확', createdAt: '2024-09-01', status: 'active', vbmappLevel: 2, domain: 'intraverbal', objectiveType: 'STO', parentProgramId: 'g9e-lto' },
+
+  // ═══════════════════════════════════════
+  // 최유진 (c4) - Level 1
+  // ═══════════════════════════════════════
+
+  { id: 'g10-lto', childId: 'c4', title: '에코익(따라 말하기)', description: '치료사의 음성 모델을 정확하게 따라 말할 수 있다.', category: '에코익', targetCriteria: '', createdAt: '2024-11-01', status: 'active', vbmappLevel: 1, domain: 'echoic', objectiveType: 'LTO' },
+  { id: 'g10', childId: 'c4', title: '단어 모방하기', description: '치료사가 말한 단어 따라 말하기', category: '에코익', targetCriteria: '10회 시도 중 8회 정확 모방', createdAt: '2024-11-01', status: 'active', vbmappLevel: 1, domain: 'echoic', objectiveType: 'STO', parentProgramId: 'g10-lto' },
+  { id: 'g10b', childId: 'c4', title: '2음절 조합 따라하기', description: '2음절 조합(빠빠, 맘마 등)을 따라 말할 수 있다.', category: '에코익', targetCriteria: '10회 중 7회 정확', createdAt: '2024-11-15', status: 'active', vbmappLevel: 1, domain: 'echoic', objectiveType: 'STO', parentProgramId: 'g10-lto' },
+
+  { id: 'g11-lto', childId: 'c4', title: '청자반응(변별하기)', description: '언어적 지시에 따라 적절한 행동을 수행할 수 있다.', category: '청자반응', targetCriteria: '', createdAt: '2024-11-01', status: 'active', vbmappLevel: 1, domain: 'listener', objectiveType: 'LTO' },
+  { id: 'g11', childId: 'c4', title: '간단한 지시 따르기', description: '1단계 언어 지시 수행하기', category: '청자반응', targetCriteria: '5회 연속 80% 이상 성공', createdAt: '2024-11-01', status: 'active', vbmappLevel: 1, domain: 'listener', objectiveType: 'STO', parentProgramId: 'g11-lto' },
+
+  { id: 'g11b-lto', childId: 'c4', title: '맨드(요구하기)', description: '원하는 것을 적절한 방법으로 요구할 수 있다.', category: '맨드', targetCriteria: '', createdAt: '2024-11-15', status: 'active', vbmappLevel: 1, domain: 'mand', objectiveType: 'LTO' },
+  { id: 'g11b', childId: 'c4', title: '몸짓으로 요구하기', description: '가리키기/손 내밀기로 원하는 것을 요구할 수 있다.', category: '맨드', targetCriteria: '5회 연속 자발적 표현', createdAt: '2024-11-15', status: 'active', vbmappLevel: 1, domain: 'mand', objectiveType: 'STO', parentProgramId: 'g11b-lto' },
+  { id: 'g11c', childId: 'c4', title: '단어로 요구하기', description: '단어(줘, 더 등)를 사용하여 요구할 수 있다.', category: '맨드', targetCriteria: '3회 연속 자발적 단어 사용', createdAt: '2024-12-01', status: 'active', vbmappLevel: 1, domain: 'mand', objectiveType: 'STO', parentProgramId: 'g11b-lto' },
+
+  // ═══════════════════════════════════════
+  // 정민호 (c5) - Level 2
+  // ═══════════════════════════════════════
+
+  { id: 'g12-lto', childId: 'c5', title: '사회성', description: '또래와의 다양한 사회적 상황에서 적절한 행동을 할 수 있다.', category: '사회성', targetCriteria: '', createdAt: '2024-08-01', status: 'active', vbmappLevel: 2, domain: 'social', objectiveType: 'LTO' },
+  { id: 'g12', childId: 'c5', title: '차례 지키기', description: '게임에서 차례 기다리고 지키기', category: '사회성', targetCriteria: '3회 연속 독립 수행', createdAt: '2024-08-01', status: 'active', vbmappLevel: 2, domain: 'social', objectiveType: 'STO', parentProgramId: 'g12-lto' },
+  { id: 'g12b', childId: 'c5', title: '양보하기', description: '또래에게 장난감을 양보할 수 있다.', category: '사회성', targetCriteria: '하루 2회 자발적 양보', createdAt: '2024-09-01', status: 'active', vbmappLevel: 2, domain: 'social', objectiveType: 'STO', parentProgramId: 'g12-lto' },
+
+  { id: 'g13-lto', childId: 'c5', title: '인트라버벌(대화)', description: '대화 상황에서 적절한 언어적 반응을 할 수 있다.', category: '인트라버벌', targetCriteria: '', createdAt: '2024-08-15', status: 'active', vbmappLevel: 2, domain: 'intraverbal', objectiveType: 'LTO' },
+  { id: 'g13', childId: 'c5', title: '감정 표현하기', description: '기본 감정 단어로 표현하기', category: '인트라버벌', targetCriteria: '하루 5회 이상 자발적 표현', createdAt: '2024-08-15', status: 'active', vbmappLevel: 2, domain: 'intraverbal', objectiveType: 'STO', parentProgramId: 'g13-lto' },
+  { id: 'g13b', childId: 'c5', title: '이유 말하기', description: '"왜?"라는 질문에 이유를 대답할 수 있다.', category: '인트라버벌', targetCriteria: '5회 연속 적절한 대답', createdAt: '2024-09-01', status: 'active', vbmappLevel: 2, domain: 'intraverbal', objectiveType: 'STO', parentProgramId: 'g13-lto' },
+
+  { id: 'g13c-lto', childId: 'c5', title: '집단기술', description: '소집단 활동에서 적절히 참여하고 규칙을 따를 수 있다.', category: '집단기술', targetCriteria: '', createdAt: '2024-09-01', status: 'active', vbmappLevel: 2, domain: 'group', objectiveType: 'LTO' },
+  { id: 'g13c', childId: 'c5', title: '집단 활동 참여', description: '소집단(3~5명) 활동에서 10분 이상 참여하기', category: '집단기술', targetCriteria: '3회 연속 10분 이상', createdAt: '2024-09-01', status: 'active', vbmappLevel: 2, domain: 'group', objectiveType: 'STO', parentProgramId: 'g13c-lto' },
+
+  // ═══════════════════════════════════════
+  // 한소율 (c6) - Level 1
+  // ═══════════════════════════════════════
+
+  { id: 'g14-lto', childId: 'c6', title: '택트(명명하기)', description: '사물, 사람, 사건 등을 보고 이름을 말할 수 있다.', category: '택트', targetCriteria: '', createdAt: '2024-12-01', status: 'active', vbmappLevel: 1, domain: 'tact', objectiveType: 'LTO' },
+  { id: 'g14', childId: 'c6', title: '그림 카드 명명', description: '그림 카드를 보고 이름 말하기', category: '택트', targetCriteria: '20개 카드 중 16개 정확', createdAt: '2024-12-01', status: 'active', vbmappLevel: 1, domain: 'tact', objectiveType: 'STO', parentProgramId: 'g14-lto' },
+  { id: 'g14b', childId: 'c6', title: '실물 명명하기', description: '실물을 보고 이름 말하기', category: '택트', targetCriteria: '10개 실물 중 8개 정확', createdAt: '2024-12-15', status: 'active', vbmappLevel: 1, domain: 'tact', objectiveType: 'STO', parentProgramId: 'g14-lto' },
+
+  { id: 'g15-lto', childId: 'c6', title: '맨드(요구하기)', description: '원하는 것을 적절한 방법으로 요구할 수 있다.', category: '맨드', targetCriteria: '', createdAt: '2024-12-01', status: 'active', vbmappLevel: 1, domain: 'mand', objectiveType: 'LTO' },
+  { id: 'g15', childId: 'c6', title: '요구 표현하기', description: '원하는 것을 몸짓/말로 표현', category: '맨드', targetCriteria: '5회 연속 자발적 표현', createdAt: '2024-12-01', status: 'active', vbmappLevel: 1, domain: 'mand', objectiveType: 'STO', parentProgramId: 'g15-lto' },
+
+  { id: 'g15b-lto', childId: 'c6', title: '청자반응(변별하기)', description: '언어 지시에 따라 적절한 행동을 수행할 수 있다.', category: '청자반응', targetCriteria: '', createdAt: '2024-12-15', status: 'active', vbmappLevel: 1, domain: 'listener', objectiveType: 'LTO' },
+  { id: 'g15b', childId: 'c6', title: '신체 부위 가리키기', description: '"코 어디?" 등 신체 부위를 가리킬 수 있다.', category: '청자반응', targetCriteria: '5개 부위 80% 정확', createdAt: '2024-12-15', status: 'active', vbmappLevel: 1, domain: 'listener', objectiveType: 'STO', parentProgramId: 'g15b-lto' },
+
+  // ═══════════════════════════════════════
+  // 윤서아 (c8) - Level 1
+  // ═══════════════════════════════════════
+
+  { id: 'g16-lto', childId: 'c8', title: '놀이', description: '다양한 놀이 활동에 참여하고 상징적 놀이를 할 수 있다.', category: '놀이', targetCriteria: '', createdAt: '2024-07-15', status: 'active', vbmappLevel: 1, domain: 'play', objectiveType: 'LTO' },
+  { id: 'g16', childId: 'c8', title: '상징 놀이', description: '인형/소꿉놀이에서 역할 수행', category: '놀이', targetCriteria: '5분 이상 독립적 상징 놀이', createdAt: '2024-07-15', status: 'active', vbmappLevel: 1, domain: 'play', objectiveType: 'STO', parentProgramId: 'g16-lto' },
+  { id: 'g16b', childId: 'c8', title: '구성 놀이', description: '블록/레고로 구조물 만들기', category: '놀이', targetCriteria: '3단 이상 쌓기 독립 수행', createdAt: '2024-08-01', status: 'active', vbmappLevel: 1, domain: 'play', objectiveType: 'STO', parentProgramId: 'g16-lto' },
+
+  { id: 'g17-lto', childId: 'c8', title: '사회성', description: '또래와의 사회적 상호작용에서 적절한 행동을 보일 수 있다.', category: '사회성', targetCriteria: '', createdAt: '2024-08-01', status: 'active', vbmappLevel: 1, domain: 'social', objectiveType: 'LTO' },
+  { id: 'g17', childId: 'c8', title: '또래 놀이 참여', description: '또래와 함께 놀이 활동 참여', category: '사회성', targetCriteria: '10분 이상 또래와 협동 놀이', createdAt: '2024-08-01', status: 'active', vbmappLevel: 1, domain: 'social', objectiveType: 'STO', parentProgramId: 'g17-lto' },
+
+  { id: 'g17b-lto', childId: 'c8', title: '모방(동작 모방)', description: '타인의 동작을 관찰하고 모방할 수 있다.', category: '모방', targetCriteria: '', createdAt: '2024-09-01', status: 'active', vbmappLevel: 1, domain: 'imitation', objectiveType: 'LTO' },
+  { id: 'g17b', childId: 'c8', title: '놀이 동작 모방', description: '또래의 놀이 동작을 관찰하고 따라하기', category: '모방', targetCriteria: '5개 동작 80% 정확', createdAt: '2024-09-01', status: 'active', vbmappLevel: 1, domain: 'imitation', objectiveType: 'STO', parentProgramId: 'g17b-lto' },
+
+  // ═══════════════════════════════════════
+  // 강도윤 (c9) - Level 2
+  // ═══════════════════════════════════════
+
+  { id: 'g18-lto', childId: 'c9', title: '사회성', description: '감정 조절 및 자기 표현을 적절히 할 수 있다.', category: '사회성', targetCriteria: '', createdAt: '2024-03-01', status: 'paused', vbmappLevel: 2, domain: 'social', objectiveType: 'LTO' },
+  { id: 'g18', childId: 'c9', title: '감정 조절', description: '화가 날 때 적절한 대처 전략 사용', category: '사회성', targetCriteria: '대처 전략 독립 사용 5회 연속', createdAt: '2024-03-01', status: 'paused', vbmappLevel: 2, domain: 'social', objectiveType: 'STO', parentProgramId: 'g18-lto' },
+  { id: 'g18b', childId: 'c9', title: '화난 상황 인식', description: '화가 나는 상황을 사전에 인식하고 알릴 수 있다.', category: '사회성', targetCriteria: '3회 연속 사전 알림', createdAt: '2024-04-01', status: 'paused', vbmappLevel: 2, domain: 'social', objectiveType: 'STO', parentProgramId: 'g18-lto' },
+
+  { id: 'g19-lto', childId: 'c9', title: '인트라버벌(대화)', description: '불편한 상황을 언어로 표현할 수 있다.', category: '인트라버벌', targetCriteria: '', createdAt: '2024-03-15', status: 'paused', vbmappLevel: 2, domain: 'intraverbal', objectiveType: 'LTO' },
+  { id: 'g19', childId: 'c9', title: '자기 표현', description: '불편한 상황을 말로 표현하기', category: '인트라버벌', targetCriteria: '5회 연속 적절한 언어 사용', createdAt: '2024-03-15', status: 'paused', vbmappLevel: 2, domain: 'intraverbal', objectiveType: 'STO', parentProgramId: 'g19-lto' },
+
+  // ═══════════════════════════════════════
+  // 신예린 (c10) - Level 1
+  // ═══════════════════════════════════════
+
+  { id: 'g20-lto', childId: 'c10', title: '모방(동작 모방)', description: '일상생활 동작을 관찰하고 독립적으로 수행할 수 있다.', category: '모방', targetCriteria: '', createdAt: '2024-09-15', status: 'active', vbmappLevel: 1, domain: 'imitation', objectiveType: 'LTO' },
+  { id: 'g20', childId: 'c10', title: '혼자 숟가락 사용', description: '식사 시 숟가락으로 독립 식사', category: '모방', targetCriteria: '한 끼 독립적 수행', createdAt: '2024-09-15', status: 'active', vbmappLevel: 1, domain: 'imitation', objectiveType: 'STO', parentProgramId: 'g20-lto' },
+  { id: 'g21', childId: 'c10', title: '상의 착탈의', description: '상의 혼자 벗고 입기', category: '모방', targetCriteria: '3회 연속 독립 수행', createdAt: '2024-10-01', status: 'active', vbmappLevel: 1, domain: 'imitation', objectiveType: 'STO', parentProgramId: 'g20-lto' },
+  { id: 'g21b', childId: 'c10', title: '손 씻기', description: '감독 하에 혼자 손 씻기(비누 사용 포함)', category: '모방', targetCriteria: '모든 단계 독립 수행', createdAt: '2024-10-15', status: 'active', vbmappLevel: 1, domain: 'imitation', objectiveType: 'STO', parentProgramId: 'g20-lto' },
+
+  { id: 'g21c-lto', childId: 'c10', title: '청자반응(변별하기)', description: '언어 지시에 따라 적절한 행동을 수행할 수 있다.', category: '청자반응', targetCriteria: '', createdAt: '2024-10-01', status: 'active', vbmappLevel: 1, domain: 'listener', objectiveType: 'LTO' },
+  { id: 'g21c', childId: 'c10', title: '일상 지시 따르기', description: '"신발 벗어", "가방 놓아" 등 일상 지시 수행하기', category: '청자반응', targetCriteria: '5회 연속 80% 이상', createdAt: '2024-10-01', status: 'active', vbmappLevel: 1, domain: 'listener', objectiveType: 'STO', parentProgramId: 'g21c-lto' },
 ];
+
+// Helper to generate trial records from legacy aggregated data
+function generateTrials(
+  sessionId: string,
+  programId: string,
+  total: number,
+  successes: number,
+  promptLevel: number,
+  problemCount: number,
+  stimuli: string[],
+): Trial[] {
+  const trials: Trial[] = [];
+  for (let i = 0; i < total; i++) {
+    const isCorrect = i < successes;
+    trials.push({
+      id: `${sessionId}-${programId}-t${i + 1}`,
+      sessionId,
+      programId,
+      trialOrder: i + 1,
+      stimulus: stimuli[i % stimuli.length],
+      response: isCorrect ? stimuli[i % stimuli.length] : '',
+      result: isCorrect ? 'correct' : 'incorrect',
+      promptLevel,
+      problemBehavior: i < problemCount,
+    });
+  }
+  return trials;
+}
+
+// Stimuli per program for realistic data
+const PROGRAM_STIMULI: Record<string, string[]> = {
+  'g1': ['과자 줘', '물 주세요', '놀이 하고 싶어', '그네 타고 싶어', '안아 주세요', '더 줘', '이거 줘', '열어 줘', '도와 줘', '같이 놀자'],
+  'g2': ['인사할 때', '이름 부를 때', '질문할 때', '놀이 중', '간식 시간', '책 읽을 때', '노래할 때', '대화 중', '지시할 때', '칭찬할 때'],
+  'g3': ['앉아', '일어나', '이리 와', '공 줘', '손 올려', '박수 쳐', '문 닫아', '의자에 앉아', '신발 벗어', '손 씻어'],
+  'g4': ['블록 쌓기', '공 굴리기', '퍼즐 맞추기', '그림 그리기', '색칠하기', '카드 게임', '보드게임', '인형 놀이'],
+  'g5': ['모래', '점토', '물감', '스티커', '솜', '나무 블록', '고무공', '천'],
+  'g6': ['박수', '만세', '점프', '돌기', '손흔들기', '고개 끄덕', '발 구르기', '팔 벌리기', '손뼉', '인사'],
+  'g7': ['안녕', '안녕하세요', '잘 가', '고마워', '미안해', '같이 놀자'],
+  'g8': ['치약 짜기', '칫솔 잡기', '위 닦기', '아래 닦기', '헹구기'],
+  'g9': ['블록→그림', '그림→간식', '간식→정리', '정리→놀이', '놀이→인사', '실내→실외'],
+  'g10': ['사과', '바나나', '물', '자동차', '강아지', '고양이', '공', '나무', '꽃', '집'],
+  'g11': ['앉아', '일어나', '손 씻어', '신발 신어', '문 열어', '가방 가져와', '의자 밀어', '컵 줘'],
+  'g12': ['주사위 던지기', '카드 뽑기', '블록 쌓기', '퍼즐 조각', '공 던지기', '그림 맞추기', '순서 기다리기', '말 옮기기'],
+  'g13': ['기뻐요', '슬퍼요', '화나요', '무서워요', '좋아요', '싫어요', '놀라워요', '지루해요'],
+  'g14': ['사과', '자동차', '강아지', '고양이', '공', '물', '나무', '꽃', '집', '배'],
+  'g15': ['줘', '더', '싫어', '좋아', '안아', '열어'],
+  'g16': ['인형 밥주기', '인형 재우기', '소꿉 요리', '병원 놀이', '가게 놀이', '전화 놀이', '운전 놀이', '학교 놀이'],
+  'g17': ['블록 함께', '공 주고받기', '그림 함께', '노래 함께', '춤 함께', '퍼즐 함께'],
+  'g18': ['심호흡', '숫자 세기', '자리 이동', '말로 표현', '도움 요청', '기다리기', '대안 찾기', '타이머 사용'],
+  'g19': ['아파요', '힘들어요', '도와주세요', '쉬고 싶어요', '무서워요', '싫어요'],
+  'g20': ['밥 뜨기', '입으로', '국 뜨기', '반찬 집기', '흘리지 않기', '그릇 잡기', '숟가락 잡기', '입 닦기'],
+  'g21': ['팔 빼기', '머리 빼기', '팔 넣기', '머리 넣기', '앞뒤 확인', '지퍼/단추'],
+};
+
+// Build sessions with individual trial records
+function buildSession(
+  id: string, childId: string, therapistId: string, date: string, duration: number, notes: string,
+  trialSpecs: { programId: string; total: number; successes: number; promptLevel: number; problemCount: number }[],
+  startTime?: string,
+): Session {
+  const trialRecords: Trial[] = [];
+  trialSpecs.forEach(spec => {
+    const stimuli = PROGRAM_STIMULI[spec.programId] || ['자극1', '자극2', '자극3'];
+    trialRecords.push(...generateTrials(id, spec.programId, spec.total, spec.successes, spec.promptLevel, spec.problemCount, stimuli));
+  });
+  // Auto-assign times if not provided: alternate between morning/afternoon slots
+  const defaultTime = startTime || (['10:00', '11:00', '13:30', '14:30', '15:30'][parseInt(id.replace(/\D/g, ''), 10) % 5]);
+  return {
+    id, childId, therapistId, date, startTime: defaultTime, duration, notes,
+    trialRecords,
+    trials: buildAggregatedTrials(trialRecords),
+    createdAt: `${date}T${defaultTime}:00`,
+  };
+}
 
 export const initialSessions: Session[] = [
   // 김하늘 sessions - showing clear improvement trend (70% -> 90%)
-  { id: 's1', childId: 'c1', therapistId: 'th1', date: '2024-12-20', duration: 50, notes: '오늘 세션에서 하늘이가 "과자 줘"라고 자발적으로 요청했습니다.', trials: [
-    { goalId: 'g1', trials: 10, successes: 7, promptLevel: 2, problemBehaviorCount: 0 },
-    { goalId: 'g2', trials: 10, successes: 5, promptLevel: 2, problemBehaviorCount: 1 },
-    { goalId: 'g3', trials: 10, successes: 7, promptLevel: 2, problemBehaviorCount: 0 },
-  ], createdAt: '2024-12-20T10:00:00' },
-  { id: 's2', childId: 'c1', therapistId: 'th1', date: '2024-12-23', duration: 50, notes: '눈맞춤 유지 시간이 조금 늘어났습니다. 칭찬 스티커에 좋은 반응.', trials: [
-    { goalId: 'g1', trials: 10, successes: 7, promptLevel: 2, problemBehaviorCount: 0 },
-    { goalId: 'g2', trials: 10, successes: 6, promptLevel: 2, problemBehaviorCount: 0 },
-    { goalId: 'g3', trials: 10, successes: 8, promptLevel: 1, problemBehaviorCount: 0 },
-  ], createdAt: '2024-12-23T10:00:00' },
-  { id: 's3', childId: 'c1', therapistId: 'th1', date: '2024-12-26', duration: 50, notes: '요청하기 목표에서 발전을 보임.', trials: [
-    { goalId: 'g1', trials: 10, successes: 8, promptLevel: 1, problemBehaviorCount: 0 },
-    { goalId: 'g2', trials: 10, successes: 7, promptLevel: 1, problemBehaviorCount: 0 },
-    { goalId: 'g3', trials: 10, successes: 8, promptLevel: 1, problemBehaviorCount: 0 },
-  ], createdAt: '2024-12-26T10:00:00' },
-  { id: 's4', childId: 'c1', therapistId: 'th1', date: '2024-12-28', duration: 50, notes: '요청하기 목표에서 큰 발전을 보임. 새로운 단어 2개 추가.', trials: [
-    { goalId: 'g1', trials: 12, successes: 10, promptLevel: 1, problemBehaviorCount: 0 },
-    { goalId: 'g2', trials: 10, successes: 7, promptLevel: 1, problemBehaviorCount: 0 },
-    { goalId: 'g3', trials: 10, successes: 9, promptLevel: 0, problemBehaviorCount: 0 },
-  ], createdAt: '2024-12-28T10:00:00' },
-  { id: 's5', childId: 'c1', therapistId: 'th1', date: '2024-12-30', duration: 50, notes: '전반적으로 안정적인 세션. 집중력 향상됨.', trials: [
-    { goalId: 'g1', trials: 10, successes: 9, promptLevel: 0, problemBehaviorCount: 0 },
-    { goalId: 'g2', trials: 10, successes: 8, promptLevel: 0, problemBehaviorCount: 0 },
-    { goalId: 'g3', trials: 10, successes: 10, promptLevel: 0, problemBehaviorCount: 0 },
-  ], createdAt: '2024-12-30T10:00:00' },
-  { id: 's6', childId: 'c1', therapistId: 'th1', date: '2025-01-03', duration: 50, notes: '새해 첫 세션. 하늘이가 기분 좋게 참여함. 독립 수행 수준 도달.', trials: [
-    { goalId: 'g1', trials: 10, successes: 9, promptLevel: 0, problemBehaviorCount: 0 },
-    { goalId: 'g2', trials: 10, successes: 9, promptLevel: 0, problemBehaviorCount: 0 },
-    { goalId: 'g3', trials: 10, successes: 10, promptLevel: 0, problemBehaviorCount: 0 },
-  ], createdAt: '2025-01-03T10:00:00' },
-  
-  // 이서준 sessions - stable trend
-  { id: 's7', childId: 'c2', therapistId: 'th2', date: '2024-12-19', duration: 45, notes: '서준이가 차례 기다리기에서 진전을 보임.', trials: [
-    { goalId: 'g4', trials: 8, successes: 5, promptLevel: 2, problemBehaviorCount: 2 },
-    { goalId: 'g5', trials: 6, successes: 4, promptLevel: 1, problemBehaviorCount: 1 },
-    { goalId: 'g6', trials: 10, successes: 6, promptLevel: 2, problemBehaviorCount: 0 },
-  ], createdAt: '2024-12-19T14:00:00' },
-  { id: 's8', childId: 'c2', therapistId: 'th2', date: '2024-12-23', duration: 45, notes: '감각 활동에 적극적으로 참여.', trials: [
-    { goalId: 'g4', trials: 8, successes: 5, promptLevel: 2, problemBehaviorCount: 1 },
-    { goalId: 'g5', trials: 8, successes: 5, promptLevel: 1, problemBehaviorCount: 0 },
-    { goalId: 'g6', trials: 10, successes: 7, promptLevel: 1, problemBehaviorCount: 0 },
-  ], createdAt: '2024-12-23T14:00:00' },
-  { id: 's9', childId: 'c2', therapistId: 'th2', date: '2024-12-26', duration: 45, notes: '새로운 촉감 재료 도입. 초기 거부 후 수용.', trials: [
-    { goalId: 'g4', trials: 8, successes: 6, promptLevel: 1, problemBehaviorCount: 1 },
-    { goalId: 'g5', trials: 8, successes: 6, promptLevel: 1, problemBehaviorCount: 1 },
-    { goalId: 'g6', trials: 10, successes: 7, promptLevel: 1, problemBehaviorCount: 0 },
-  ], createdAt: '2024-12-26T14:00:00' },
-  { id: 's10', childId: 'c2', therapistId: 'th2', date: '2024-12-28', duration: 45, notes: '모방 능력 향상. 연속 동작 가능해짐.', trials: [
-    { goalId: 'g4', trials: 10, successes: 7, promptLevel: 1, problemBehaviorCount: 0 },
-    { goalId: 'g5', trials: 8, successes: 6, promptLevel: 1, problemBehaviorCount: 0 },
-    { goalId: 'g6', trials: 10, successes: 8, promptLevel: 1, problemBehaviorCount: 0 },
-  ], createdAt: '2024-12-28T14:00:00' },
-  { id: 's11', childId: 'c2', therapistId: 'th2', date: '2024-12-30', duration: 45, notes: '전반적으로 안정적인 세션.', trials: [
-    { goalId: 'g4', trials: 10, successes: 7, promptLevel: 1, problemBehaviorCount: 0 },
-    { goalId: 'g5', trials: 10, successes: 7, promptLevel: 1, problemBehaviorCount: 0 },
-    { goalId: 'g6', trials: 10, successes: 7, promptLevel: 1, problemBehaviorCount: 0 },
-  ], createdAt: '2024-12-30T14:00:00' },
-  { id: 's12', childId: 'c2', therapistId: 'th2', date: '2025-01-02', duration: 45, notes: '새해 첫 세션. 안정적인 수행.', trials: [
-    { goalId: 'g4', trials: 10, successes: 7, promptLevel: 1, problemBehaviorCount: 0 },
-    { goalId: 'g5', trials: 10, successes: 7, promptLevel: 0, problemBehaviorCount: 0 },
-    { goalId: 'g6', trials: 10, successes: 8, promptLevel: 0, problemBehaviorCount: 0 },
-  ], createdAt: '2025-01-02T14:00:00' },
-  
-  // 박지우 sessions - showing regression trend (75% -> 50%)
-  { id: 's13', childId: 'c3', therapistId: 'th3', date: '2024-12-14', duration: 50, notes: '지우가 또래 상호작용에서 진전을 보임.', trials: [
-    { goalId: 'g7', trials: 8, successes: 6, promptLevel: 1, problemBehaviorCount: 1 },
-    { goalId: 'g8', trials: 5, successes: 4, promptLevel: 1, problemBehaviorCount: 0 },
-    { goalId: 'g9', trials: 6, successes: 5, promptLevel: 1, problemBehaviorCount: 1 },
-  ], createdAt: '2024-12-14T11:00:00' },
-  { id: 's14', childId: 'c3', therapistId: 'th3', date: '2024-12-18', duration: 50, notes: '양치하기 독립성 증가. 전환 적응 양호.', trials: [
-    { goalId: 'g7', trials: 8, successes: 6, promptLevel: 1, problemBehaviorCount: 1 },
-    { goalId: 'g8', trials: 5, successes: 4, promptLevel: 0, problemBehaviorCount: 0 },
-    { goalId: 'g9', trials: 6, successes: 4, promptLevel: 1, problemBehaviorCount: 1 },
-  ], createdAt: '2024-12-18T11:00:00' },
-  { id: 's15', childId: 'c3', therapistId: 'th3', date: '2024-12-21', duration: 50, notes: '전환 활동에서 다소 어려움 발생.', trials: [
-    { goalId: 'g7', trials: 6, successes: 4, promptLevel: 2, problemBehaviorCount: 1 },
-    { goalId: 'g8', trials: 5, successes: 4, promptLevel: 0, problemBehaviorCount: 0 },
-    { goalId: 'g9', trials: 6, successes: 3, promptLevel: 2, problemBehaviorCount: 3 },
-  ], createdAt: '2024-12-21T11:00:00' },
-  { id: 's16', childId: 'c3', therapistId: 'th3', date: '2024-12-24', duration: 50, notes: '전환 활동에서 어려움이 지속됨.', trials: [
-    { goalId: 'g7', trials: 6, successes: 3, promptLevel: 2, problemBehaviorCount: 2 },
-    { goalId: 'g8', trials: 5, successes: 4, promptLevel: 0, problemBehaviorCount: 0 },
-    { goalId: 'g9', trials: 8, successes: 3, promptLevel: 3, problemBehaviorCount: 4 },
-  ], createdAt: '2024-12-24T11:00:00' },
-  { id: 's17', childId: 'c3', therapistId: 'th3', date: '2024-12-26', duration: 50, notes: '성공률 저하. 문제행동 증가 관찰됨.', trials: [
-    { goalId: 'g7', trials: 6, successes: 3, promptLevel: 3, problemBehaviorCount: 2 },
-    { goalId: 'g8', trials: 5, successes: 3, promptLevel: 1, problemBehaviorCount: 1 },
-    { goalId: 'g9', trials: 8, successes: 2, promptLevel: 3, problemBehaviorCount: 5 },
-  ], createdAt: '2024-12-26T11:00:00' },
-  { id: 's18', childId: 'c3', therapistId: 'th3', date: '2024-12-28', duration: 50, notes: '전환 전략 조정 필요. 문제행동 관리 필요.', trials: [
-    { goalId: 'g7', trials: 6, successes: 3, promptLevel: 3, problemBehaviorCount: 2 },
-    { goalId: 'g8', trials: 5, successes: 3, promptLevel: 1, problemBehaviorCount: 1 },
-    { goalId: 'g9', trials: 8, successes: 2, promptLevel: 3, problemBehaviorCount: 4 },
-  ], createdAt: '2024-12-28T11:00:00' },
+  buildSession('s1', 'c1', 'th1', '2024-12-20', 50, '오늘 세션에서 하늘이가 "과자 줘"라고 자발적으로 요청했습니다.', [
+    { programId: 'g1', total: 10, successes: 7, promptLevel: 2, problemCount: 0 },
+    { programId: 'g2', total: 10, successes: 5, promptLevel: 2, problemCount: 1 },
+    { programId: 'g3', total: 10, successes: 7, promptLevel: 2, problemCount: 0 },
+  ]),
+  buildSession('s2', 'c1', 'th1', '2024-12-23', 50, '눈맞춤 유지 시간이 조금 늘어났습니다. 칭찬 스티커에 좋은 반응.', [
+    { programId: 'g1', total: 10, successes: 7, promptLevel: 2, problemCount: 0 },
+    { programId: 'g2', total: 10, successes: 6, promptLevel: 2, problemCount: 0 },
+    { programId: 'g3', total: 10, successes: 8, promptLevel: 1, problemCount: 0 },
+  ]),
+  buildSession('s3', 'c1', 'th1', '2024-12-26', 50, '요청하기 목표에서 발전을 보임.', [
+    { programId: 'g1', total: 10, successes: 8, promptLevel: 1, problemCount: 0 },
+    { programId: 'g2', total: 10, successes: 7, promptLevel: 1, problemCount: 0 },
+    { programId: 'g3', total: 10, successes: 8, promptLevel: 1, problemCount: 0 },
+  ]),
+  buildSession('s4', 'c1', 'th1', '2024-12-28', 50, '요청하기 목표에서 큰 발전을 보임. 새로운 단어 2개 추가.', [
+    { programId: 'g1', total: 12, successes: 10, promptLevel: 1, problemCount: 0 },
+    { programId: 'g2', total: 10, successes: 7, promptLevel: 1, problemCount: 0 },
+    { programId: 'g3', total: 10, successes: 9, promptLevel: 0, problemCount: 0 },
+  ]),
+  buildSession('s5', 'c1', 'th1', '2024-12-30', 50, '전반적으로 안정적인 세션. 집중력 향상됨.', [
+    { programId: 'g1', total: 10, successes: 9, promptLevel: 0, problemCount: 0 },
+    { programId: 'g2', total: 10, successes: 8, promptLevel: 0, problemCount: 0 },
+    { programId: 'g3', total: 10, successes: 10, promptLevel: 0, problemCount: 0 },
+  ]),
+  buildSession('s6', 'c1', 'th1', '2025-01-03', 50, '새해 첫 세션. 하늘이가 기분 좋게 참여함. 독립 수행 수준 도달.', [
+    { programId: 'g1', total: 10, successes: 9, promptLevel: 0, problemCount: 0 },
+    { programId: 'g2', total: 10, successes: 9, promptLevel: 0, problemCount: 0 },
+    { programId: 'g3', total: 10, successes: 10, promptLevel: 0, problemCount: 0 },
+  ]),
+
+  // 이서준 sessions - stable
+  buildSession('s7', 'c2', 'th2', '2024-12-19', 45, '서준이가 차례 기다리기에서 진전을 보임.', [
+    { programId: 'g4', total: 8, successes: 5, promptLevel: 2, problemCount: 2 },
+    { programId: 'g5', total: 6, successes: 4, promptLevel: 1, problemCount: 1 },
+    { programId: 'g6', total: 10, successes: 6, promptLevel: 2, problemCount: 0 },
+  ]),
+  buildSession('s8', 'c2', 'th2', '2024-12-23', 45, '감각 활동에 적극적으로 참여.', [
+    { programId: 'g4', total: 8, successes: 5, promptLevel: 2, problemCount: 1 },
+    { programId: 'g5', total: 8, successes: 5, promptLevel: 1, problemCount: 0 },
+    { programId: 'g6', total: 10, successes: 7, promptLevel: 1, problemCount: 0 },
+  ]),
+  buildSession('s9', 'c2', 'th2', '2024-12-26', 45, '새로운 촉감 재료 도입. 초기 거부 후 수용.', [
+    { programId: 'g4', total: 8, successes: 6, promptLevel: 1, problemCount: 1 },
+    { programId: 'g5', total: 8, successes: 6, promptLevel: 1, problemCount: 1 },
+    { programId: 'g6', total: 10, successes: 7, promptLevel: 1, problemCount: 0 },
+  ]),
+  buildSession('s10', 'c2', 'th2', '2024-12-28', 45, '모방 능력 향상. 연속 동작 가능해짐.', [
+    { programId: 'g4', total: 10, successes: 7, promptLevel: 1, problemCount: 0 },
+    { programId: 'g5', total: 8, successes: 6, promptLevel: 1, problemCount: 0 },
+    { programId: 'g6', total: 10, successes: 8, promptLevel: 1, problemCount: 0 },
+  ]),
+  buildSession('s11', 'c2', 'th2', '2024-12-30', 45, '전반적으로 안정적인 세션.', [
+    { programId: 'g4', total: 10, successes: 7, promptLevel: 1, problemCount: 0 },
+    { programId: 'g5', total: 10, successes: 7, promptLevel: 1, problemCount: 0 },
+    { programId: 'g6', total: 10, successes: 7, promptLevel: 1, problemCount: 0 },
+  ]),
+  buildSession('s12', 'c2', 'th2', '2025-01-02', 45, '새해 첫 세션. 안정적인 수행.', [
+    { programId: 'g4', total: 10, successes: 7, promptLevel: 1, problemCount: 0 },
+    { programId: 'g5', total: 10, successes: 7, promptLevel: 0, problemCount: 0 },
+    { programId: 'g6', total: 10, successes: 8, promptLevel: 0, problemCount: 0 },
+  ]),
+
+  // 박지우 sessions - regression
+  buildSession('s13', 'c3', 'th3', '2024-12-14', 50, '지우가 또래 상호작용에서 진전을 보임.', [
+    { programId: 'g7', total: 8, successes: 6, promptLevel: 1, problemCount: 1 },
+    { programId: 'g8', total: 5, successes: 4, promptLevel: 1, problemCount: 0 },
+    { programId: 'g9', total: 6, successes: 5, promptLevel: 1, problemCount: 1 },
+  ]),
+  buildSession('s14', 'c3', 'th3', '2024-12-18', 50, '양치하기 독립성 증가. 전환 적응 양호.', [
+    { programId: 'g7', total: 8, successes: 6, promptLevel: 1, problemCount: 1 },
+    { programId: 'g8', total: 5, successes: 4, promptLevel: 0, problemCount: 0 },
+    { programId: 'g9', total: 6, successes: 4, promptLevel: 1, problemCount: 1 },
+  ]),
+  buildSession('s15', 'c3', 'th3', '2024-12-21', 50, '전환 활동에서 다소 어려움 발생.', [
+    { programId: 'g7', total: 6, successes: 4, promptLevel: 2, problemCount: 1 },
+    { programId: 'g8', total: 5, successes: 4, promptLevel: 0, problemCount: 0 },
+    { programId: 'g9', total: 6, successes: 3, promptLevel: 2, problemCount: 3 },
+  ]),
+  buildSession('s16', 'c3', 'th3', '2024-12-24', 50, '전환 활동에서 어려움이 지속됨.', [
+    { programId: 'g7', total: 6, successes: 3, promptLevel: 2, problemCount: 2 },
+    { programId: 'g8', total: 5, successes: 4, promptLevel: 0, problemCount: 0 },
+    { programId: 'g9', total: 8, successes: 3, promptLevel: 3, problemCount: 4 },
+  ]),
+  buildSession('s17', 'c3', 'th3', '2024-12-26', 50, '성공률 저하. 문제행동 증가 관찰됨.', [
+    { programId: 'g7', total: 6, successes: 3, promptLevel: 3, problemCount: 2 },
+    { programId: 'g8', total: 5, successes: 3, promptLevel: 1, problemCount: 1 },
+    { programId: 'g9', total: 8, successes: 2, promptLevel: 3, problemCount: 5 },
+  ]),
+  buildSession('s18', 'c3', 'th3', '2024-12-28', 50, '전환 전략 조정 필요. 문제행동 관리 필요.', [
+    { programId: 'g7', total: 6, successes: 3, promptLevel: 3, problemCount: 2 },
+    { programId: 'g8', total: 5, successes: 3, promptLevel: 1, problemCount: 1 },
+    { programId: 'g9', total: 8, successes: 2, promptLevel: 3, problemCount: 4 },
+  ]),
+
+  // 최유진 - improving
+  buildSession('s19', 'c4', 'th1', '2024-12-15', 45, '새로운 단어에 긍정적 반응.', [
+    { programId: 'g10', total: 10, successes: 6, promptLevel: 2, problemCount: 1 },
+    { programId: 'g11', total: 8, successes: 5, promptLevel: 2, problemCount: 0 },
+  ]),
+  buildSession('s20', 'c4', 'th1', '2024-12-18', 45, '모방 정확도 향상.', [
+    { programId: 'g10', total: 10, successes: 7, promptLevel: 1, problemCount: 0 },
+    { programId: 'g11', total: 8, successes: 6, promptLevel: 1, problemCount: 0 },
+  ]),
+  buildSession('s21', 'c4', 'th1', '2024-12-22', 45, '자발적 모방 시도 증가.', [
+    { programId: 'g10', total: 10, successes: 8, promptLevel: 1, problemCount: 0 },
+    { programId: 'g11', total: 8, successes: 7, promptLevel: 0, problemCount: 0 },
+  ]),
+  buildSession('s22', 'c4', 'th1', '2025-01-04', 45, '새해 세션. 꾸준한 향상.', [
+    { programId: 'g10', total: 10, successes: 8, promptLevel: 0, problemCount: 0 },
+    { programId: 'g11', total: 8, successes: 7, promptLevel: 0, problemCount: 0 },
+  ]),
+
+  // 정민호 - stable
+  buildSession('s23', 'c5', 'th1', '2024-12-16', 50, '차례 기다리기에서 약간의 어려움.', [
+    { programId: 'g12', total: 6, successes: 4, promptLevel: 2, problemCount: 2 },
+    { programId: 'g13', total: 8, successes: 5, promptLevel: 1, problemCount: 0 },
+  ]),
+  buildSession('s24', 'c5', 'th1', '2024-12-20', 50, '개선 조짐 보임.', [
+    { programId: 'g12', total: 8, successes: 6, promptLevel: 1, problemCount: 1 },
+    { programId: 'g13', total: 8, successes: 5, promptLevel: 1, problemCount: 0 },
+  ]),
+  buildSession('s25', 'c5', 'th1', '2024-12-27', 50, '안정적 수행.', [
+    { programId: 'g12', total: 8, successes: 6, promptLevel: 1, problemCount: 0 },
+    { programId: 'g13', total: 8, successes: 6, promptLevel: 1, problemCount: 0 },
+  ]),
+  buildSession('s26', 'c5', 'th1', '2025-01-02', 50, '새해 세션. 일관된 수행.', [
+    { programId: 'g12', total: 8, successes: 6, promptLevel: 1, problemCount: 0 },
+    { programId: 'g13', total: 8, successes: 6, promptLevel: 0, problemCount: 0 },
+  ]),
+
+  // 한소율 - improving
+  buildSession('s27', 'c6', 'th1', '2024-12-10', 40, '첫 세션. 기초 평가.', [
+    { programId: 'g14', total: 10, successes: 4, promptLevel: 3, problemCount: 1 },
+    { programId: 'g15', total: 6, successes: 2, promptLevel: 3, problemCount: 0 },
+  ]),
+  buildSession('s28', 'c6', 'th1', '2024-12-17', 40, '적응 중. 약간의 향상.', [
+    { programId: 'g14', total: 10, successes: 5, promptLevel: 2, problemCount: 0 },
+    { programId: 'g15', total: 6, successes: 3, promptLevel: 2, problemCount: 0 },
+  ]),
+  buildSession('s29', 'c6', 'th1', '2024-12-24', 40, '그림 카드 명명 향상.', [
+    { programId: 'g14', total: 10, successes: 6, promptLevel: 1, problemCount: 0 },
+    { programId: 'g15', total: 6, successes: 4, promptLevel: 1, problemCount: 0 },
+  ]),
+  buildSession('s30', 'c6', 'th1', '2025-01-03', 40, '꾸준한 향상 지속.', [
+    { programId: 'g14', total: 10, successes: 7, promptLevel: 1, problemCount: 0 },
+    { programId: 'g15', total: 6, successes: 5, promptLevel: 0, problemCount: 0 },
+  ]),
+
+  // 윤서아 - improving
+  buildSession('s31', 'c8', 'th2', '2024-12-19', 45, '상징 놀이 활동에 참여.', [
+    { programId: 'g16', total: 8, successes: 5, promptLevel: 2, problemCount: 0 },
+    { programId: 'g17', total: 6, successes: 3, promptLevel: 2, problemCount: 1 },
+  ]),
+  buildSession('s32', 'c8', 'th2', '2024-12-26', 45, '또래 놀이 시간 증가.', [
+    { programId: 'g16', total: 8, successes: 6, promptLevel: 1, problemCount: 0 },
+    { programId: 'g17', total: 6, successes: 4, promptLevel: 1, problemCount: 0 },
+  ]),
+  buildSession('s33', 'c8', 'th2', '2025-01-04', 45, '상징 놀이 독립성 향상.', [
+    { programId: 'g16', total: 8, successes: 7, promptLevel: 0, problemCount: 0 },
+    { programId: 'g17', total: 6, successes: 5, promptLevel: 1, problemCount: 0 },
+  ]),
+
+  // 강도윤 - last sessions before pause
+  buildSession('s34', 'c9', 'th2', '2024-11-20', 50, '감정 조절 어려움 지속.', [
+    { programId: 'g18', total: 8, successes: 3, promptLevel: 3, problemCount: 4 },
+    { programId: 'g19', total: 6, successes: 3, promptLevel: 2, problemCount: 2 },
+  ]),
+  buildSession('s35', 'c9', 'th2', '2024-11-27', 50, '마지막 세션. 중단 전 평가.', [
+    { programId: 'g18', total: 8, successes: 3, promptLevel: 3, problemCount: 3 },
+    { programId: 'g19', total: 6, successes: 3, promptLevel: 2, problemCount: 2 },
+  ]),
+
+  // 신예린 - stable
+  buildSession('s36', 'c10', 'th3', '2024-12-12', 45, '숟가락 사용 연습.', [
+    { programId: 'g20', total: 8, successes: 5, promptLevel: 2, problemCount: 0 },
+    { programId: 'g21', total: 6, successes: 3, promptLevel: 2, problemCount: 0 },
+  ]),
+  buildSession('s37', 'c10', 'th3', '2024-12-19', 45, '자조기술 단계적 향상.', [
+    { programId: 'g20', total: 8, successes: 5, promptLevel: 1, problemCount: 0 },
+    { programId: 'g21', total: 6, successes: 4, promptLevel: 1, problemCount: 0 },
+  ]),
+  buildSession('s38', 'c10', 'th3', '2024-12-26', 45, '꾸준한 진전.', [
+    { programId: 'g20', total: 8, successes: 6, promptLevel: 1, problemCount: 0 },
+    { programId: 'g21', total: 6, successes: 4, promptLevel: 1, problemCount: 0 },
+  ]),
+  buildSession('s39', 'c10', 'th3', '2025-01-03', 45, '새해 세션. 안정적 수행.', [
+    { programId: 'g20', total: 8, successes: 6, promptLevel: 0, problemCount: 0 },
+    { programId: 'g21', total: 6, successes: 5, promptLevel: 0, problemCount: 0 },
+  ]),
 ];
 
 export const initialReports: Report[] = [
@@ -264,47 +747,7 @@ export const initialReports: Report[] = [
     periodStart: '2024-12-01',
     periodEnd: '2024-12-31',
     summary: '요청하기 목표 성공률 70%→90% 향상, 눈맞춤 유지 62%→90% 향상. 전반적으로 긍정적 발전.',
-    content: `[김하늘 아동 - 2024년 12월 관찰 보고서]
-
-※ 본 리포트는 진단/처방이 아니라, 입력된 기록을 기반으로 한 관찰 요약입니다.
-
-안녕하세요, 김영희 보호자님.
-
-12월 한 달간 하늘이의 치료 활동에 대한 관찰 내용을 전달드립니다.
-
-【기간 요약】
-이번 기간 동안 총 6회의 치료 세션이 진행되었습니다. 하늘이는 전반적으로 긍정적인 발전을 보였으며, 특히 의사소통 영역에서 눈에 띄는 향상이 관찰되었습니다. 자발적 요청 빈도가 증가하였고, 촉진 수준이 전체적으로 낮아져 독립성이 향상되고 있습니다.
-
-【목표별 변화】
-
-1. 요청하기 (의사소통)
-   - 성공률: 70% → 90%로 향상 (+20%p)
-   - 촉진 수준: 부분신체(2) → 독립(0)으로 발전
-   - "과자 줘", "놀이 하고 싶어" 등 자발적 요청 증가
-
-2. 눈맞춤 유지 (사회성)
-   - 성공률: 50% → 90%로 향상 (+40%p)
-   - 촉진 수준: 부분신체(2) → 독립(0)으로 발전
-   - 눈맞춤 유지 시간 평균 2초에서 4초로 증가
-   
-3. 지시 따르기 (수용언어)
-   - 성공률: 70% → 100%로 향상 (+30%p)
-   - 촉진 수준: 부분신체(2) → 독립(0)으로 발전
-   - 거의 모든 1단계 지시를 독립적으로 수행
-
-【관찰된 패턴】
-- 세션 초반 10분간 집중력이 가장 높음
-- 칭찬 스티커에 매우 긍정적인 반응
-- 새로운 단어 습득 속도가 빨라지고 있음
-- 문제행동 발생 빈도가 크게 감소 (세션당 평균 1회 → 0회)
-
-【다음 세션 관찰 포인트】
-- 2단어 조합 요청 시도 관찰
-- 또래와의 상호작용에서 눈맞춤 유지 관찰
-- 새로운 상황에서의 지시 따르기 일반화 관찰
-
-감사합니다.
-담당 치료사: 김민지`,
+    content: `[김하늘 아동 - 2024년 12월 관찰 보고서]\n\n※ 본 리포트는 진단/처방이 아니라, 입력된 기록을 기반으로 한 관찰 요약입니다.\n\n안녕하세요, 김영희 보호자님.\n\n12월 한 달간 하늘이의 치료 활동에 대한 관찰 내용을 전달드립니다.\n\n【기간 요약】\n이번 기간 동안 총 6회의 치료 세션이 진행되었습니다.\n\n【목표별 변화】\n\n1. 요청하기 (의사소통)\n   - 성공률: 70% → 90%로 향상 (+20%p)\n   - 촉진 수준: 부분신체(3) → 독립(0)으로 발전\n   - 마스터한 자극: 과자 줘, 물 주세요, 놀이 하고 싶어\n\n2. 눈맞춤 유지 (사회성)\n   - 성공률: 50% → 90%로 향상 (+40%p)\n   - 독립 수행 수준 도달\n\n3. 지시 따르기 (수용언어)\n   - 성공률: 70% → 100%로 향상 (+30%p)\n   - 마스터한 자극: 앉아, 일어나, 이리 와, 공 줘, 손 올려\n\n감사합니다.\n담당 치료사: 김민지`,
     createdAt: '2024-12-31T09:00:00',
     createdBy: '김민지',
     includedGoals: ['g1', 'g2', 'g3'],
@@ -312,17 +755,13 @@ export const initialReports: Report[] = [
 ];
 
 export const initialCenterProfile: CenterProfile = {
-  name: '해오름 발달센터',
+  name: '아이랑 ABA 행동발달연구소',
   location: '서울특별시 강남구 테헤란로 123',
   phone: '02-1234-5678',
-  email: 'hello@haeoreum.kr',
+  email: 'hello@airang-aba.kr',
   establishedDate: '2020-03-01',
 };
 
-// Prompt level labels
-export const promptLevelLabels = ['독립', '언어촉진', '부분신체', '전체신체'];
-
-// Sample import data for data migration demo
 export const sampleImportData = [
   { child_name: '최유진', birth_year: '2020', concern: '언어 발달 지연', goal_title: '단어 모방하기', session_date: '2024-12-15', trials: 10, success: 6, prompt_level: 2, problem_count: 1, session_note: '새로운 단어에 긍정적 반응' },
   { child_name: '최유진', birth_year: '2020', concern: '언어 발달 지연', goal_title: '단어 모방하기', session_date: '2024-12-18', trials: 10, success: 7, prompt_level: 1, problem_count: 0, session_note: '모방 정확도 향상' },

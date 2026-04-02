@@ -17,6 +17,7 @@ import {
 
 interface AppState {
   role: Role;
+  currentTherapistId: string;
   children: Child[];
   goals: Goal[];
   sessions: Session[];
@@ -31,8 +32,10 @@ interface AppContextType extends AppState {
   updateChild: (id: string, updates: Partial<Child>) => void;
   addGoal: (goal: Goal) => void;
   updateGoal: (id: string, updates: Partial<Goal>) => void;
+  deleteGoal: (id: string) => void;
   addSession: (session: Session) => void;
   addReport: (report: Report) => void;
+  updateReport: (id: string, updates: Partial<Report>) => void;
   resetData: () => void;
   getChildById: (id: string) => Child | undefined;
   getGoalsByChildId: (childId: string) => Goal[];
@@ -45,8 +48,10 @@ interface AppContextType extends AppState {
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
+
 const getInitialState = (): AppState => ({
   role: 'admin',
+  currentTherapistId: 'th1',
   children: [...initialChildren],
   goals: [...initialGoals],
   sessions: [...initialSessions],
@@ -113,6 +118,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }));
   }, []);
 
+  const deleteGoal = useCallback((id: string) => {
+    setState((prev) => ({
+      ...prev,
+      goals: prev.goals.filter((g) => g.id !== id),
+    }));
+  }, []);
+
   const updateChildTrend = useCallback((childId: string) => {
     setState((prev) => {
       const childSessions = prev.sessions.filter(s => s.childId === childId);
@@ -150,6 +162,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const addReport = useCallback((report: Report) => {
     setState((prev) => ({ ...prev, reports: [...prev.reports, report] }));
+  }, []);
+
+  const updateReport = useCallback((id: string, updates: Partial<Report>) => {
+    setState((prev) => ({
+      ...prev,
+      reports: prev.reports.map((r) => (r.id === id ? { ...r, ...updates } : r)),
+    }));
   }, []);
 
   const resetData = useCallback(() => {
@@ -199,8 +218,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
         updateChild,
         addGoal,
         updateGoal,
+        deleteGoal,
         addSession,
         addReport,
+        updateReport,
         resetData,
         getChildById,
         getGoalsByChildId,
